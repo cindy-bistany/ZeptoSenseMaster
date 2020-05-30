@@ -45,9 +45,9 @@ function z_git_add_commit_all() {
      echo -n "Enter the commit message: "
      read answer
      z_make_clean
-     git add .
+     git add --verbose .
      #git diff --cached
-     git commit -a -m "${answer}"
+     git commit --verbose -a -m "${answer}"
     )
 }
 
