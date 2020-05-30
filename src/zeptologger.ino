@@ -1,3 +1,7 @@
+// Particle.io (Arduino) code for zeptive vape sensor
+// Copyright 2020 zeptive.com
+//
+
 #define BLYNK_PRINT Serial1 // Defines the object that is used for printing
 #define BLYNK_DEBUG        // Optional, this enables more detailed prints
 #define BLYNK_HEARTBEAT      60
@@ -28,19 +32,17 @@ uint16_t portBlynk = 8080;
 #define KURTDEBUG
 
 #ifdef SERIAL_DEBUG
-  #define DEBUG_PRINT(...) Serial1.print(__VA_ARGS__)
-  #define DEBUG_PRINTLN(...) Serial1.println(__VA_ARGS__)
-  #define DEBUG_PRINTF(...) Serial1.printf(__VA_ARGS__)
+  #define debug(...) Serial1.print(__VA_ARGS__)
+  #define debugf(...) Serial1.printf(__VA_ARGS__)
 #else
-  #define DEBUG_PRINT(...)
-  #define DEBUG_PRINTLN(...)
-  #define DEBUG_PRINTF(...)
+  #define debug(...)
+  #define debugf(...)
 #endif
 
 // Uncomment for startup beeps
 // Two pips okay
 // One beep not okay
-//#define BEEP
+#define BEEP
 
 //***************** INTERRUPT ******************
 int interruptPin = A0;                 // Setup pin A0 for Boron
@@ -112,8 +114,12 @@ typedef struct
   bool bInSleepMode; // If TRUE was in a sleep
   int OnTime;
 
-}state_t;
+} state_t;
 state_t state;
+
+void state_str(state_t st) {
+  //print out the state struct on the debug serial port
+}
 
 bool powerOn, appConnected, sensorValid = false, currentAlert = false, terminalDebug = false;
 bool batCurrentAlert = false, tamperCurrentAlert = false;
@@ -338,7 +344,7 @@ bool checkI2CDevices(String i2cNames[], byte i2cAddr[], size_t i2cLength, bool i
 {
   byte error, address;
   bool result = true;
-  for (size_t i; i<i2cLength; ++i)
+  for (size_t i=0; i<i2cLength; ++i)
   {
     // The i2c_scanner uses the return value of
     // the Write.endTransmisstion to see if
@@ -353,18 +359,11 @@ bool checkI2CDevices(String i2cNames[], byte i2cAddr[], size_t i2cLength, bool i
       Wire.beginTransmission(address);
       error = Wire.endTransmission();
     }
- 
-    if (error == 0)
-    {
-      DEBUG_PRINTLN(String("Device "+i2cNames[i]+ " at"+" address:0x"+String(address, HEX)));
-      i2cExists[i]=true;
-    }
-    else
-    {
-      DEBUG_PRINTLN(String("Device "+i2cNames[i]+ " NOT at"+" address:0x"+String(address, HEX)));
-      i2cExists[i]=false;
-      result = false;
-    }
+
+    String msg = "Device "+ i2cNames[i] + " address:0x" + String(address, HEX);
+    result = i2cExists[i] = (error == 0);
+    msg += result ? " FOUND\n" : " NOT FOUND\n";
+    debug(msg);
   }
   return result;
 }
@@ -373,12 +372,8 @@ bool checkI2CDevices(String i2cNames[], byte i2cAddr[], size_t i2cLength, bool i
 void printI2C(int inx)
 {
     for (int i=0; i<i2cLength; i++)
-        {
-          if (i2cAddr[i] == inx)
-          {
-              DEBUG_PRINTLN(String("Device "+i2cNames[i]+ " at"+" address:0x"+String(i2cAddr[i], HEX)));
-          }
-        }        
+      if (i2cAddr[i] == inx)
+	debug(String("Device "+i2cNames[i]+ " at"+" address:0x"+String(i2cAddr[i], HEX) + "\n"));
 }
 
 void scanI2C()
@@ -386,7 +381,7 @@ void scanI2C()
   byte error, address;
   int nDevices;
  
-  DEBUG_PRINTLN("Scanning...");
+  debug("Scanning...\n");
   nDevices = 0;
   for(address = 1; address < 127; address++ )
   {
@@ -399,21 +394,20 @@ void scanI2C()
     if (error == 0)
     {
       printI2C(address);
- 
       nDevices++;
     }
     else if (error==4)
     {
-      DEBUG_PRINT("Unknown error at address 0x");
+      debug("Unknown error at address 0x");
       if (address<16)
-        DEBUG_PRINT("0");
-      DEBUG_PRINTLN(address,HEX);
+        debug("0");
+      debug(String(address,HEX) + "\n");
     }    
   }
   if (nDevices == 0)
-    DEBUG_PRINTLN("No I2C devices found\n");
+    debug("No I2C devices found\n");
   else
-    DEBUG_PRINTLN("done\n");
+    debug("done\n");
 }
 ///////////////////////
 
@@ -456,22 +450,18 @@ IAQ sensor1(A2, A4, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RESP
 
 void readSensors()
 {
-  DEBUG_PRINTLN("start readSensors");
+  debug("start readSensors\n");
 #ifdef KURTDEBUG
-  DEBUG_PRINT("State values are: Buzzer Tamper ");
-  DEBUG_PRINTLN(state.buzzerTamper);
-  DEBUG_PRINT("Buzzer Vapor ");
-  DEBUG_PRINTLN(state.buzzerVapor);
-  DEBUG_PRINT("Notify Vapor ");
-  DEBUG_PRINTLN(state.notifyVapor);
-  DEBUG_PRINT("Notify Tamper ");
-  DEBUG_PRINTLN(state.notifyTamper);
-  DEBUG_PRINT("Notify Battery ");
-  DEBUG_PRINTLN(state.notifyBattery);
-  DEBUG_PRINT("Activity Threshold ");
-  DEBUG_PRINTLN(state.ActivityThreshold);
-  DEBUG_PRINT("Device Zone ");
-  DEBUG_PRINTLN(state.deviceZone);
+  String msg = "";
+  msg = msg + "State values are: \n" +
+    "Buzzer Tamper " + state.buzzerTamper + "\n" +
+    "Buzzer Vapor " + state.buzzerVapor + "\n" +
+    "Notify Vapor " + state.notifyVapor + "\n" +
+    "Notify Tamper " + state.notifyTamper + "\n" +
+    "Notify Battery " + state.notifyBattery + "\n" +
+    "Activity Threshold " + state.ActivityThreshold + "\n" +
+    "Device Zone " + state.deviceZone + "\n";
+  debug(msg);
 #endif 
   // Woke up out of a sleep - setup the HW
   if (state.bInSleepMode){
@@ -490,7 +480,7 @@ void readSensors()
 
     Wire.begin();
     delay(100);
-    DEBUG_PRINTLN("Start Setup section after a sleep");
+    debug("Start Setup section after a sleep\n");
 
     ///////////////////////////////////////////////////////////
     // CHECK TO MAKE SURE THE EXPANDER CAN BE SEEN
@@ -514,7 +504,7 @@ void readSensors()
     // Blink LED and reset if there is an error
     if (!expandererror == 0)
     {
-      DEBUG_PRINTLN("Unable to read Expander - resetting in 9 seconds");
+      debug("Unable to read Expander - resetting in 9 seconds\n");
       Particle.publish("Error","Unable to read Expander - resetting in 9 seconds",PRIVATE);
       blinkRed.setActive(true);
       delay(3000);
@@ -540,20 +530,20 @@ void readSensors()
     fram.readData(0, (uint8_t *)&d1, sizeof(d1));
     Serial1.printlnf("d1=%u", d1);
 
-    DEBUG_PRINTLN("Checking i2c devices...");
+    debug("Checking i2c devices...\n");
 
     bool i2cOK = checkI2CDevices(i2cNames, i2cAddr, i2cLength, i2cExists);
 
     for (size_t x=0; x<i2cLength;++x)
     {
-      DEBUG_PRINT(i2cNames[x]);
-      DEBUG_PRINT(": ");
-      DEBUG_PRINTLN(i2cExists[x]);
+      debug(i2cNames[x]);
+      debug(": ");
+      debug(i2cExists[x] + "\n");
     }
     if (!i2cOK)
     {
       StateString = "ERR";
-      DEBUG_PRINTLN("I2C Issue");
+      debug("I2C Issue\n");
       RGB.control(true);
       // the following sets the RGB LED to red
       RGB.color(255, 0, 0);
@@ -575,7 +565,7 @@ void readSensors()
     else
     {
       StateString = "RDY";
-      DEBUG_PRINTLN("I2C OK");
+      debug("I2C OK\n");
       #ifdef BEEP
       digitalWrite(buzzer, HIGH);
       delay(5);
@@ -597,20 +587,20 @@ void readSensors()
     }
 
     long int clockTime = rtc.rtcNow();
-    DEBUG_PRINTLN("Before");
-    DEBUG_PRINT(clockTime);
-    DEBUG_PRINTLN(": ");
-    DEBUG_PRINTLN(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)));
+    debug("Before\n");
+    debug(clockTime);
+    debug(": \n");
+    debug(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)) + "\n");
     if (clockTime<946684800||clockTime>4102444799)
     {
       // 2019-01-01T00:00:00+00:00 in ISO 8601
       // Actual time is not important for rtc reset but needs to be a positive unix time
       rtc.setUnixTime(1262304000);
       long int clockTime = rtc.rtcNow();
-      DEBUG_PRINTLN("After");
-      DEBUG_PRINT(clockTime);
-      DEBUG_PRINTLN(": ");
-      DEBUG_PRINTLN(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)));
+      debug("After\n");
+      debug(clockTime);
+      debug(": \n");
+      debug(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)) + "\n");
     }
     timeSynced=false;
     Sensor.begin();
@@ -620,8 +610,8 @@ void readSensors()
  
    /////////////
   // Setup ADXL345
-    DEBUG_PRINT("ADXL345 Setup");
-    DEBUG_PRINTLN();
+    debug("ADXL345 Setup");
+    debug("\n");
     // // *Temp Debug* Set the pin mode to output, so you may control it.
     // pinMode(ledPin, OUTPUT);
     // Power on the ADXL345
@@ -664,19 +654,19 @@ void readSensors()
     {
       if (!Sensor.begin())
       {
-        DEBUG_PRINTLN("Unable to read SPS30 - trying again");
+        debug("Unable to read SPS30 - trying again\n");
         delay(1000);
       }
       else
       {
-        DEBUG_PRINTLN("Read SPS30");
+        debug("Read SPS30\n");
         sps30OK = true;
       }
     }
     
     if (!sps30OK)
     {
-      DEBUG_PRINTLN("Unable to read SPS30 - resetting device");
+      debug("Unable to read SPS30 - resetting device\n");
       delay(1000);
       System.reset();    
     }
@@ -701,10 +691,10 @@ void readSensors()
     if (abs(Time.now()-rtc.rtcNow())<10)
     {
       timeSynced=true;
-      DEBUG_PRINTLN("Time is sync'ed to the cloud"); 
+      debug("Time is synced to the cloud\n"); 
       /*String TimeMsg;
       TimeMsg="Time "+Time.format(rtc.rtcNow()+gmtOffsetSeconds,"%h%e %R");
-      DEBUG_PRINTLN(TimeMsg);*/
+      debug(TimeMsg); + "\n"*/
 
     }
   }
@@ -718,14 +708,14 @@ void readSensors()
     Sensor.getMass(mass_concen);
     Sensor.getNum(num_concen);
 
-    DEBUG_PRINTLN("--Mass Concentration--");
+    debug("--Mass Concentration--\n");
     for(i=0; i<4;i++) {
-        DEBUG_PRINTF("%s: %0.2f\r\n", pm[i+1],mass_concen[i]);
+        debugf("%s: %0.2f\r\n", pm[i+1],mass_concen[i]);
     }
     
-    DEBUG_PRINTLN("--Number Concentration--");
+    debug("--Number Concentration--\n");
     for(i=0; i<5;i++) {
-        DEBUG_PRINTF("%s: %0.2f\r\n", pm[i],num_concen[i]);
+        debugf("%s: %0.2f\r\n", pm[i],num_concen[i]);
     }
     // Sensor.massPM1, Sensor.massPM25, Sensor.massPM4, Sensor.massPM10     
     field1 = String::format("%0.1f", Sensor.massPM1);
@@ -735,22 +725,14 @@ void readSensors()
 
     //////////
     temp1 = sensor1.getTemp(1,"F");  // Use .getTemp(n, "F") to get temp in Fahrenheit, with n as int number of seconds for averaging and "F" or "C" for temp units
+    conc1 = sensor1.getConc(1,sensor1.getTemp(1));
     
-    DEBUG_PRINT("temp1: ");
-    DEBUG_PRINT(temp1);
-    DEBUG_PRINTLN();
-    
+    debugf("temp1: %f\n", temp1);
     //Use .getVgas(int n) where n is the number of seconds to average
     //Use ._Vref to read the reference voltage (voltage offset)
-    DEBUG_PRINT("Vgas: ");
-    DEBUG_PRINT(sensor1.getVgas(1));
-    DEBUG_PRINTLN();
-    
+    debugf("Vgas: %f\n", sensor1.getVgas(1));
     //Use .getConc(1, temp1) where temp1 is in deg C for temperature corrected span
-    DEBUG_PRINT("Conc: ");
-    //  DEBUG_PRINT(", ");
-    conc1 = sensor1.getConc(1,sensor1.getTemp(1));
-    DEBUG_PRINTLN(conc1);
+    debugf("Conc: %f\n", conc1);
 
     field5 = String::format("%0.1f", conc1);
     field6 = String::format("%0.1f", temp1);
@@ -795,7 +777,7 @@ void readSensors()
     Blynk.virtualWrite(V8, field8);   
 
     // Particle.publish("Test readings",datastring,60,PRIVATE);
-    DEBUG_PRINTLN(datastring);
+    debug(datastring + "\n");
     sensorValid = true;
     String statusMessage;
     String alertMessage;
@@ -839,7 +821,7 @@ void readSensors()
       int messagesize=statusMessage.length();
       if (messagesize<5){
         statusMessage=String::format("Updating");
-        DEBUG_PRINTLN(statusMessage);
+        debug(statusMessage + "\n");
         delay(1000);
         System.reset();
       }
@@ -853,7 +835,7 @@ void readSensors()
          //Turn Buzzer Off if timer expired
          unsigned long vape_elapsed_buzzer =  millis() - VapeAlertBuzzerTime;
   	 alertMessage=String::format("buzzer total time %ul ****", vape_elapsed_buzzer);
-         DEBUG_PRINTLN(alertMessage);
+         debug(alertMessage + "\n");
          if (vape_elapsed_buzzer>8000){
            digitalWrite(buzzer, LOW);
 	         VapeBuzzerOn=false;
@@ -871,7 +853,7 @@ void readSensors()
             digitalWrite(buzzer, HIGH);
             VapeAlertBuzzerTime = millis();
             alertMessage=String::format("Vape alert buzzer time reset at %ul ****", VapeAlertBuzzerTime);
-            DEBUG_PRINTLN(alertMessage);
+            debug(alertMessage + "\n");
 	          VapeBuzzerOn=true;
             //delay(8000);
         }
@@ -889,7 +871,7 @@ void readSensors()
       {
        unsigned long elapsed = millis() - VapeAlertTime;
   	   alertMessage=String::format("Vape Alert total time %ul milliseconds", elapsed/10);
-       DEBUG_PRINTLN(alertMessage);
+       debug(alertMessage + "\n");
        if (state.notifyVapor==true)
         {
           #ifdef Version_2
@@ -945,31 +927,31 @@ void readSensors()
   { 
     if (!Sensor.beginMeasuring())
     {
-      DEBUG_PRINTLN("Unable to read SPS30 - resetting device 1");
+      debug("Unable to read SPS30 - resetting device 1\n");
       delay(1000);
       System.reset();
     }
 
   }
   if (terminalDebug) Blynk.virtualWrite(V21, String(readingCount)+"\n");
-  DEBUG_PRINT(millis());
-  DEBUG_PRINT(": ");
-  DEBUG_PRINTLN(readingCount);
-  DEBUG_PRINTLN();
+  debug(millis());
+  debug(": ");
+  debug(readingCount + "\n");
+  debug("\n");
   readingCount++;
 }
 
 void saveState()
 {
   // EEPROM.put(0, state);
-  DEBUG_PRINTLN("Saving State");
+  debug("Saving State\n");
   fram.put(0,state);
 }
 
 void loadState()
 {
   // EEPROM.get(0, state);
-  DEBUG_PRINTLN("Loading State");
+  debug("Loading State\n");
   fram.get(0,state);
 }
 
@@ -1018,7 +1000,7 @@ void deepSleep()
     Wire.end();
   }  
 
-  DEBUG_PRINTLN("Going to sleep");
+  debug("Going to sleep\n");
   #if Wiring_Cellular
   if (!state.bSleepModeStandby)
     Cellular.off();
@@ -1032,13 +1014,13 @@ void deepSleep()
 
   delay(1000);
   if (state.bSleepModeStandby){
-    DEBUG_PRINTLN("Going to standby sleep");
+    debug("Going to standby sleep\n");
     state.bInSleepMode=true;
     System.sleep(D8, RISING, 900, SLEEP_NETWORK_STANDBY);
     return;
   }
   else{
-    DEBUG_PRINTLN("Going to deep sleep");
+    debug("Going to deep sleep\n");
     state.bSleepModeStandby=false;
     state.bInSleepMode=true;
     delay(2000);
@@ -1050,13 +1032,13 @@ void deepSleep()
 BLYNK_APP_CONNECTED() {
   appConnected = true;
   setAppWidgets();
-  DEBUG_PRINTLN("Connected");
+  debug("Connected\n");
 }
 
 BLYNK_APP_DISCONNECTED() {
 // Your code here
  appConnected = false;
- DEBUG_PRINTLN("Disconnected");
+ debug("Disconnected\n");
 }
 
 // Update the App UI widgets as needed
@@ -1099,7 +1081,7 @@ void initializeAppWidgets()
   state.firstRunCheck = firstRunValue;
   state.bSleepModeStandby=true;
   state.bInSleepMode=false;
-  DEBUG_PRINTLN("Finished Initialization");
+  debug("Finished Initialization\n");
   saveState();
 }
 
@@ -1150,7 +1132,7 @@ BLYNK_WRITE(V22) //Reset Expression
     // EEPROM.clear();
     fram.erase();
     Blynk.virtualWrite(V21, "Hard Resetting");
-    DEBUG_PRINTLN("Hard Resetting");
+    debug("Hard Resetting\n");
     delay(500);
     System.reset();
   }
@@ -1159,7 +1141,7 @@ BLYNK_WRITE(V22) //Reset Expression
 // This function will run every time Blynk connection is established
 BLYNK_CONNECTED() {
   // Request Blynk server to re-send latest values for all pins
-  DEBUG_PRINTLN("Blynk is now connected - syncing all pins.");
+  debug("Blynk is now connected - syncing all pins.\n");
   if (state.firstRunCheck != firstRunValue)
   {
     initializeAppWidgets();
@@ -1293,8 +1275,8 @@ BLYNK_WRITE(V23)
     #endif
     state.deviceZone=param.asInt();
 #ifdef KURTDEBUG
-    DEBUG_PRINT("*****Device Zone value is: ");
-    DEBUG_PRINTLN(state.deviceZone);
+    debug("*****Device Zone value is: ");
+    debug(state.deviceZone + "\n");
 #endif
     gmtOffsetValid=false;
   saveState();
@@ -1315,8 +1297,8 @@ BLYNK_WRITE(V24)
   saveState();
 
 #ifdef KURTDEBUG
-    DEBUG_PRINT("*****Update buzzerTamper flag value is: ");
-    DEBUG_PRINTLN(state.buzzerTamper);
+    debug("*****Update buzzerTamper flag value is: ");
+    debug(state.buzzerTamper + "\n");
 #endif
 }
 // Update buzzerVapor flag
@@ -1334,8 +1316,8 @@ BLYNK_WRITE(V27)
     state.buzzerVapor=param.asInt();
   saveState();
 #ifdef KURTDEBUG
-    DEBUG_PRINT("*****Update buzzerVapor flag value is: ");
-    DEBUG_PRINTLN(state.buzzerVapor);
+    debug("*****Update buzzerVapor flag value is: ");
+    debug(state.buzzerVapor + "\n");
 #endif
 }
 // Update notifyVapor flag
@@ -1353,8 +1335,8 @@ BLYNK_WRITE(V28)
     state.notifyVapor=param.asInt();
   saveState();
 #ifdef KURTDEBUG
-    DEBUG_PRINT("*****Update notifyVapor flag value is: ");
-    DEBUG_PRINTLN(state.notifyVapor);
+    debug("*****Update notifyVapor flag value is: ");
+    debug(state.notifyVapor + "\n");
 #endif
 }
 // Update notifyTamper flag
@@ -1372,8 +1354,8 @@ BLYNK_WRITE(V29)
     state.notifyTamper=param.asInt();
   saveState();
 #ifdef KURTDEBUG
-    DEBUG_PRINT("*****Update notifyTamper flag value is: ");
-    DEBUG_PRINTLN(state.notifyTamper);
+    debug("*****Update notifyTamper flag value is: ");
+    debug(state.notifyTamper + "\n");
 #endif
 }
 
@@ -1384,8 +1366,8 @@ BLYNK_WRITE(V31)
   int oldvalue=state.ActivityThreshold;
 
 #ifdef KURTDEBUG
-    DEBUG_PRINT("*****Update Accelerometer threshold value is: ");
-    DEBUG_PRINTLN(thresh);
+    debug("*****Update Accelerometer threshold value is: ");
+    debug(thresh + "\n");
 #endif
   state.ActivityThreshold=100;
   if (thresh==3)
@@ -1398,9 +1380,9 @@ BLYNK_WRITE(V31)
   if (state.ActivityThreshold != oldvalue)
   {
 #ifdef KURTDEBUG
-    DEBUG_PRINT("Update Accelerometer value is: ");
-    DEBUG_PRINTLN(state.ActivityThreshold);
-    DEBUG_PRINT("Will reset system ");
+    debug("Update Accelerometer value is: ");
+    debug(state.ActivityThreshold + "\n");
+    debug("Will reset system ");
 #endif
     saveState();
     delay(4000);
@@ -1423,8 +1405,8 @@ BLYNK_WRITE(V32)
     state.notifyBattery=param.asInt();
   saveState();
 #ifdef KURTDEBUG
-    DEBUG_PRINT("Update notifyBattery flag value is: ");
-    DEBUG_PRINTLN(state.notifyBattery);
+    debug("Update notifyBattery flag value is: ");
+    debug(state.notifyBattery + "\n");
 #endif
 }
 bool runExpression(char *expression)
@@ -1465,7 +1447,7 @@ bool runExpression(char *expression)
       te_free(expr);
   } else {
       String mess = "Error near char: " + String(err);
-      // DEBUG_PRINTF("Parse error at %d\n", err);
+      // debugf("Parse error at %d\n", err);
       if (terminalDebug) Blynk.virtualWrite(V21, mess);
       return false;
   } 
@@ -1520,8 +1502,8 @@ void gmtOffsetHandler(const char *event, const char *data) {
   // Handle the integration response
   gmtOffsetSeconds=atoi(data);
   gmtOffsetValid = true;
-  DEBUG_PRINT("GMT seconds offset is: ");
-  DEBUG_PRINTLN(gmtOffsetSeconds);
+  debug("GMT seconds offset is: ");
+  debug(gmtOffsetSeconds + "\n");
 }
 
 //******************** ISR *********************
@@ -1536,7 +1518,7 @@ void checkAccel()
   // Not ideal to have this in the loop
   if (accelInterrupt)
   {
-    DEBUG_PRINTLN("*** ACCEL INTERRUPTED ***");
+    debug("*** ACCEL INTERRUPTED ***\n");
     // Turn off Interrupts for Activity(1 == ON, 0 == OFF)
     adxl.InactivityINT(0);
     adxl.ActivityINT(0);
@@ -1546,7 +1528,7 @@ void checkAccel()
 
     // Inactivity
     if(adxl.triggered(interrupts, ADXL345_INACTIVITY)){
-      DEBUG_PRINTLN("*** INACTIVITY ***");
+      debug("*** INACTIVITY ***\n");
       // *Temp Debug* Turn off the LED.
       // digitalWrite(ledPin, LOW);
       //Robert add code here for Blynk to do when inactivity is sensed
@@ -1564,7 +1546,7 @@ void checkAccel()
     }
     // Activity
     if(adxl.triggered(interrupts, ADXL345_ACTIVITY)){
-      DEBUG_PRINTLN("*** ACTIVITY ***"); 
+      debug("*** ACTIVITY ***\n");
       // *Temp Debug* Turn on the LED.
       // digitalWrite(ledPin, HIGH);
       //Robert add code here for Blynk to do when activity is sensed
@@ -1623,17 +1605,17 @@ void setAlarm(int DURATION)
 {
     rtc.disableAlarm0();
     int rtcnow = rtc.rtcNow();
-    DEBUG_PRINTLN(rtcnow);
+    debug(rtcnow + "\n");
     int alarmTime = rtcnow + DURATION;
     String mess = String(Time.format(rtcnow, TIME_FORMAT_ISO8601_FULL))+" + "+String(DURATION)+" = "+String(Time.format(alarmTime, TIME_FORMAT_ISO8601_FULL))+"\r\n";
-    DEBUG_PRINT(mess);
+    debug(mess);
     if (terminalDebug) Blynk.virtualWrite(V21, mess);
     rtc.setAlarm0UnixTime(alarmTime);
 }
 
 void initializeAlarm()
 {
-  DEBUG_PRINTLN("Initializing alarm");
+  debug("Initializing alarm\n");
   rtc.outHigh();
   rtc.disableAlarms();
   rtc.maskAlarm0("Seconds");
@@ -1662,13 +1644,13 @@ void connect()
   bool cellready=Cellular.ready();
   if (!cellready)
   {
-    DEBUG_PRINTLN("Attempting to connect cellular...");
+    debug("Attempting to connect cellular...\n");
     Cellular.on();
     Cellular.connect();
     waitFor(Cellular.ready,180000);
     if (!Cellular.ready())
     {
-    DEBUG_PRINTLN("Cellular not ready");
+    debug("Cellular not ready\n");
     delay(200);
     // timerSleep(3);
     System.reset();
@@ -1676,20 +1658,20 @@ void connect()
   }
   else
   {
-    DEBUG_PRINTLN("Cellular ready");
+    debug("Cellular ready\n");
   }
   #endif
   #if Wiring_WiFi
   bool cellready=WiFi.ready();
   if (!cellready)
   {
-    DEBUG_PRINTLN("Attempting to connect WiFi...");
+    debug("Attempting to connect WiFi...\n");
     WiFi.on();
     WiFi.connect();
     waitFor(WiFi.ready,180000);
     if (!WiFi.ready())
     {
-    DEBUG_PRINTLN("WiFi not ready");
+    debug("WiFi not ready\n");
     delay(200);
     // timerSleep(3);
     System.reset();
@@ -1697,19 +1679,19 @@ void connect()
   }
   else
   {
-    DEBUG_PRINTLN("WiFi ready");
+    debug("WiFi ready\n");
   }
   #endif  
 //*** Commented out for testing without particle connected ***
   bool partconnected=Particle.connected();
   if (!partconnected)
   {
-    DEBUG_PRINTLN("Attempting to connect to Particle...");
+    debug("Attempting to connect to Particle...\n");
     Particle.connect();
     waitFor(Particle.connected,60000);
     if (!Particle.connected())
     {
-      DEBUG_PRINTLN("Particle not connected");
+      debug("Particle not connected\n");
       delay(200);
       // timerSleep(3);
       System.reset();
@@ -1717,13 +1699,13 @@ void connect()
   }
   else
   {
-    DEBUG_PRINTLN("Particle connected");
+    debug("Particle connected\n");
   }
 //*** Commented out for testing without particle connected ***
   bool blynkconnected=Blynk.connected();
   if (!blynkconnected)
   {
-    DEBUG_PRINTLN("Attempting to connect to Blynk...");
+    debug("Attempting to connect to Blynk...\n");
     #ifdef Version_2
     Blynk.config(auth, "zeptosense2.blynk.cc",portBlynk);
     #else
@@ -1731,7 +1713,7 @@ void connect()
     #endif
     if (!Blynk.connect())
     {
-      DEBUG_PRINTLN("Blynk not connected");
+      debug("Blynk not connected\n");
       delay(200);
       // timerSleep(3);
       System.reset();      
@@ -1739,7 +1721,7 @@ void connect()
   }
   else
   {
-    DEBUG_PRINTLN("Blynk connected");
+    debug("Blynk connected\n");
   }
 }
 
@@ -1749,10 +1731,10 @@ void connectWithoutWaiting()
   bool cellready=Cellular.ready();
   if (!cellready)
   {
-    DEBUG_PRINTLN("Cellular not ready");
+    debug("Cellular not ready\n");
     if (!Cellular.connecting())
     {
-      DEBUG_PRINTLN("Attempting to connect cellular...");
+      debug("Attempting to connect cellular...\n");
       Cellular.on();
       Cellular.connect();
     }
@@ -1762,10 +1744,10 @@ void connectWithoutWaiting()
   bool wifiready=WiFi.ready();
   if (!wifiready)
   {
-    DEBUG_PRINTLN("WiFi not ready");
+    debug("WiFi not ready\n");
     if (!WiFi.connecting())
     {
-      DEBUG_PRINTLN("Attempting to connect WiFi...");
+      debug("Attempting to connect WiFi...\n");
       WiFi.on();
       WiFi.connect();
     }
@@ -1774,41 +1756,41 @@ void connectWithoutWaiting()
   else
   {
     #if Wiring_Cellular
-    DEBUG_PRINTLN("Cellular ready");
+    debug("Cellular ready\n");
     #endif
     #if Wiring_WiFi
-    DEBUG_PRINTLN("WiFi ready");
+    debug("WiFi ready\n");
     #endif    
     bool blynkconnected=Blynk.connected();
     if (!blynkconnected)
     {
-      DEBUG_PRINTLN("Attempting to connect to Blynk...");
+      debug("Attempting to connect to Blynk...\n");
 
       Blynk.run();
       if (!Blynk.connect())
       {
-        DEBUG_PRINTLN("Blynk not connected");
+        debug("Blynk not connected\n");
       }
     }
     else
     {
-      DEBUG_PRINTLN("Blynk connected");
+      debug("Blynk connected\n");
     }
 
   //*** Commented out for testing without particle connected ***
     bool partconnected=Particle.connected();
     if (!partconnected)
     {
-      DEBUG_PRINTLN("Attempting to connect to Particle...");
+      debug("Attempting to connect to Particle...\n");
       Particle.connect();
       if (!Particle.connected())
       {
-        DEBUG_PRINTLN("Particle not connected");
+        debug("Particle not connected\n");
       } 
     }
     else
     {
-      DEBUG_PRINTLN("Particle connected");
+      debug("Particle connected\n");
     }
   //*** Commented out for testing without particle connected ***
   }
@@ -1822,25 +1804,25 @@ bool connected()
   #if Wiring_Cellular
   if (!Cellular.ready())
   {
-    DEBUG_PRINTLN("Cellular not ready");
+    debug("Cellular not ready\n");
     connected = false;
   }
   #endif
   #if Wiring_WiFi
   if (!WiFi.ready())
   {
-    DEBUG_PRINTLN("WiFi not ready");
+    debug("WiFi not ready\n");
     connected = false;
   }
   #endif  
   if (!Particle.connected)
   {
-    DEBUG_PRINTLN("Particle not connected");
+    debug("Particle not connected\n");
     connected = false;
   }
   if (!Blynk.connected())
   {
-    DEBUG_PRINTLN("Blynk not connected");
+    debug("Blynk not connected\n");
     connected = false;
   }
   return connected;
@@ -1849,8 +1831,8 @@ bool connected()
 void publishGMTOffsetRequest()
 {
   // Send to https://timezonedb.com webhook for gmtOffset
-  DEBUG_PRINT("publishGMTOffsetRequest Device Zone value is: ");
-  DEBUG_PRINTLN(state.deviceZone);
+  debug("publishGMTOffsetRequest Device Zone value is: ");
+  debug(state.deviceZone + "\n");
   switch (state.deviceZone)
   {
     case 0:
@@ -1892,7 +1874,7 @@ void setup()
 
   Wire.begin();
   delay(100);
-  DEBUG_PRINTLN("Start Setup() function");
+  debug("Start Setup() function\n");
 
   ///////////////////////////////////////////////////////////
   // CHECK TO MAKE SURE THE EXPANDER CAN BE SEEN
@@ -1916,7 +1898,7 @@ void setup()
   // Blink LED and reset if there is an error
   if (!expandererror == 0)
   {
-    DEBUG_PRINTLN("Unable to read Expander - resetting in 9 seconds");
+    debug("Unable to read Expander - resetting in 9 seconds\n");
     Particle.publish("Error","Unable to read Expander - resetting in 9 seconds",PRIVATE);
     blinkRed.setActive(true);
     delay(3000);
@@ -1945,36 +1927,36 @@ void setup()
   SleepResult result = System.sleepResult();
   switch (result.reason()) {
     case WAKEUP_REASON_NONE: {
-      DEBUG_PRINTLN("Device did not wake up from Particle sleep");
+      debug("Device did not wake up from Particle sleep\n");
       break;
     }
     case WAKEUP_REASON_PIN: {
-      DEBUG_PRINTLN("Device was woken up by a pin");
+      debug("Device was woken up by a pin\n");
       break;
     }
     case WAKEUP_REASON_RTC: {
-      DEBUG_PRINTLN("Device was woken up by the Particle RTC (after a specified number of seconds)");
+      debug("Device was woken up by the Particle RTC (after a specified number of seconds)\n");
       break;
     }
     case WAKEUP_REASON_PIN_OR_RTC: {
-      DEBUG_PRINTLN("Device was woken up by either a pin or the Particle RTC (after a specified number of seconds)");
+      debug("Device was woken up by either a pin or the Particle RTC (after a specified number of seconds)\n");
       break;
     }
   }
-  DEBUG_PRINTLN("Checking i2c devices...");
+  debug("Checking i2c devices...\n");
 
   bool i2cOK = checkI2CDevices(i2cNames, i2cAddr, i2cLength, i2cExists);
 
   for (size_t x=0; x<i2cLength;++x)
   {
-    DEBUG_PRINT(i2cNames[x]);
-    DEBUG_PRINT(": ");
-    DEBUG_PRINTLN(i2cExists[x]);
+    debug(i2cNames[x]);
+    debug(": ");
+    debug(i2cExists[x] + "\n");
   }
   if (!i2cOK)
   {
     StateString = "ERR";
-    DEBUG_PRINTLN("I2C Issue");
+    debug("I2C Issue\n");
     RGB.control(true);
     // the following sets the RGB LED to red
     RGB.color(255, 0, 0);
@@ -1996,7 +1978,7 @@ void setup()
   else
   {
     StateString = "RDY";
-    DEBUG_PRINTLN("I2C OK");
+    debug("I2C OK\n");
     #ifdef BEEP
     digitalWrite(buzzer, HIGH);
     delay(5);
@@ -2018,20 +2000,20 @@ void setup()
   }
 
   long int clockTime = rtc.rtcNow();
-  DEBUG_PRINTLN("Before");
-  DEBUG_PRINT(clockTime);
-  DEBUG_PRINTLN(": ");
-  DEBUG_PRINTLN(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)));
+  debug("Before\n");
+  debug(clockTime);
+  debug(": \n");
+  debug(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)) + "\n");
   if (clockTime<946684800||clockTime>4102444799)
   {
     // 2019-01-01T00:00:00+00:00 in ISO 8601
     // Actual time is not important for rtc reset but needs to be a positive unix time
     rtc.setUnixTime(1262304000);
     long int clockTime = rtc.rtcNow();
-    DEBUG_PRINTLN("After");
-    DEBUG_PRINT(clockTime);
-    DEBUG_PRINTLN(": ");
-    DEBUG_PRINTLN(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)));
+    debug("After\n");
+    debug(clockTime);
+    debug(": \n");
+    debug(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)) + "\n");
   }
   Sensor.begin();
   adxl.powerOn();
@@ -2043,10 +2025,7 @@ void setup()
   if (state.firstRunCheck != firstRunValue)
   {
     // Then this is the first time running so set defaults
-    DEBUG_PRINT("state.firstRunCheck = ");
-    DEBUG_PRINTLN(state.firstRunCheck);
-    DEBUG_PRINT("firstRunValue = ");
-    DEBUG_PRINTLN(firstRunValue);    
+    debugf("state.firstRunCheck = %b firstRunValue = %d\n",  state.firstRunCheck, firstRunValue);
     // state.firstRunCheck = firstRunValue; Move this to the initializeAppWidget() function
     state.numberOfReadings = 24;
     state.secondsBetweenReadings = 5;
@@ -2069,21 +2048,21 @@ void setup()
     state.deviceZone=0; //America/New_York
     // Save state
     // saveState(); // Move this to the initializeAppWidget() function
-    DEBUG_PRINTLN("First run.");
+    debug("First run.\n");
     // Force a connect here for the first time the device runs
     connect();
   }
   else
   {
-    DEBUG_PRINTLN("Not first run.");
+    debug("Not first run.\n");
     // firstRun =false;
   }
 
 
 /////////////
 // Setup ADXL345
-  DEBUG_PRINT("ADXL345 Setup");
-  DEBUG_PRINTLN();
+  debug("ADXL345 Setup");
+  debug("\n");
   // // *Temp Debug* Set the pin mode to output, so you may control it.
   // pinMode(ledPin, OUTPUT);
   // Power on the ADXL345
@@ -2117,19 +2096,17 @@ void setup()
   attachInterrupt(interruptPin, ADXL_ISR, CHANGE);
 
 /////////////
-  DEBUG_PRINTLN();
+  debug("\n");
 
 
 /////////////
-  DEBUG_PRINTLN();
-  DEBUG_PRINTLN("Setting Up");
-  DEBUG_PRINTLN(iSoftwareVersion);
-  DEBUG_PRINT("Vsup for all sensors = ");
-  DEBUG_PRINTLN(ULP::_Vsup);
-  DEBUG_PRINT("Vcc for all sensors = ");
-  DEBUG_PRINTLN(ULP::_Vcc);
-  DEBUG_PRINT("Vref for sensor 1 = ");
-  DEBUG_PRINTLN(sensor1._Vref);
+  String msg = "";
+  msg = msg + "\n" + "Setting Up\n" +
+    iSoftwareVersion + "\n" +
+    "Vsup for all sensors = " + ULP::_Vsup + "\n" +
+    "Vcc for all sensors = " + ULP::_Vcc + "\n" +
+    "Vref for sensor 1 = " + sensor1._Vref + "\n";
+  debug(msg);
   
   //  Using resistor values from board R1, R2, R3 are for setting _Vref and Bias, while R6 sets the gain
   //  If using modified or custom boards set Vref and Gain like this
@@ -2139,16 +2116,15 @@ void setup()
   //sensor1._Gain = 49900; //resistor R6
 
   // This is not calibrated.
-  DEBUG_PRINTLN(sensor1._Voff = state.zeroOff);
+  sensor1._Voff = state.zeroOff;
+  debug(sensor1._Voff);
 
 
   //  Vref is not necessary if zero() is called for each sensor. If you already know the sensor zero you can comment this out, and set the zero with zero1 = measured mV.
-  //   DEBUG_PRINT("Vzero = ");
-  //   DEBUG_PRINTLN(Vzero1 = sensor1.zero());   //.zero() sets and returns the baseline voltage at current temperature with only clean air present
+  //   debug("Vzero = ");
+  //   debug(Vzero1 = sensor1.zero());   //.zero() sets and returns the baseline voltage at current temperature with only clean air prese + "\n"nt
   //   Particle.publish("Vzero", String(Vzero1));
-
-  DEBUG_PRINT("Tzero = ");
-  DEBUG_PRINTLN(sensor1._Tz);
+  debugf("Tzero = %f\n", sensor1._Tz);
   
   
   //sensor1.setXSpan();                                
@@ -2156,8 +2132,8 @@ void setup()
   //When calibrating the temperature use "LOW"/"HIGH" for the temperature range ie .setTSpan(40.2, "HIGH") where T is the current high temperature
   //sensor1.setTSpan((71 - 32.0) * 5.0 / 9.0, "LOW");
 
-  DEBUG_PRINTLN("Finished Setting Up");
-  DEBUG_PRINTLN("T1, mV1, C1");
+  debug("Finished Setting Up\n");
+  debug("T1, mV1, C1\n");
   ////////////
 
   delay(300);  
@@ -2170,19 +2146,19 @@ void setup()
   {
     if (!Sensor.begin())
     {
-      DEBUG_PRINTLN("Unable to read SPS30 - trying again");
+      debug("Unable to read SPS30 - trying again\n");
       delay(1000);
     }
     else
     {
-      DEBUG_PRINTLN("Read SPS30");
+      debug("Read SPS30\n");
       sps30OK = true;
     }
   }
   
   if (!sps30OK)
   {
-    DEBUG_PRINTLN("Unable to read SPS30 - resetting device");
+    debug("Unable to read SPS30 - resetting device\n");
     delay(1000);
     System.reset();    
   }
@@ -2225,10 +2201,10 @@ void setup()
   accelTimer.setInterval(111,checkAccel); // timer to check accel
   accelTimer.run();
 
-  DEBUG_PRINTLN("Setup complete");
+  debug("Setup complete\n");
   StateString = "RDY";
   readSensors(); 
-  DEBUG_PRINTLN("End Setup() function");
+  debug("End Setup() function\n");
 }
 
 void loop()
@@ -2243,7 +2219,7 @@ void loop()
       break;
     }
     case WAKEUP_REASON_RTC: {
-      DEBUG_PRINTLN("Device was woken up by the Particle RTC (after 15 minutes), go into Deep Sleep");
+      debug("Device was woken up by the Particle RTC (after 15 minutes), go into Deep Sleep\n");
       state.bSleepModeStandby=false;
       // Delay here in loop is okay because we are about to sleep
       digitalWrite(buzzer, LOW);
