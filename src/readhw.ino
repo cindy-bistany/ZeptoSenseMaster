@@ -85,14 +85,13 @@ void hw_i2con()
 {
   bool i2cOK = checkI2CDevices(i2cNames, i2cAddr, i2cLength, i2cExists);
 
-  for (size_t x=0; x<i2cLength;++x)
-    {
-      debug(i2cNames[x]);
-      debug(": ");
-      debug(i2cExists[x] + "\n");
-    }
-  if (!i2cOK)
-    {
+  for (size_t x=0; x < i2cLength; x++) {
+    debug(i2cNames[x]);
+    debug(": ");
+    debug(i2cExists[x] + "\n");
+  }
+  
+  if (!i2cOK) {
       StateString = "ERR";
       debug("I2C Issue\n");
       RGB.control(true);
@@ -108,29 +107,30 @@ void hw_i2con()
 #endif
       //Generate 9 pulses on SCL to tell slave to release the bus 
       Wire.reset();     
-      if (!Wire.isEnabled()) {
+      if (!Wire.isEnabled())
         Wire.begin();
-      }
       Wire.end();
     }
-  else
-    {
-      StateString = "RDY";
-      debug("I2C OK\n");
+  else {
+    StateString = "RDY";
+    debug("I2C OK\n");
+    beep(0b111011101110);
+    /*
 #ifdef BEEP
-      digitalWrite(buzzer, HIGH);
-      delay(5);
-      digitalWrite(buzzer, LOW);
-      delay(200);  
-      digitalWrite(buzzer, HIGH);
-      delay(5);
-      digitalWrite(buzzer, LOW);
-      delay(200);  
-      digitalWrite(buzzer, HIGH);
-      delay(5);
-      digitalWrite(buzzer, LOW);
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    delay(200);  
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    delay(200);  
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
 #endif
-    }
+    */
+  }
   delay(200);
   if (!i2cOK)
     {
@@ -160,7 +160,7 @@ hw_rtcon()
 }
 
 
-void hw_read()
+void readings_get()
 {
   debug("start readSensors\n");
 #ifdef KURTDEBUG
