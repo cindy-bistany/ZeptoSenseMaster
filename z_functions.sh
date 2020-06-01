@@ -48,6 +48,7 @@ function z_git_add_commit_all() {
      git add --verbose .
      #git diff --cached
      git commit --verbose -a -m "${answer}"
+     git add remote origin https://cindy-bistany:Zeptive2019\!/ZeptoSenseMaster.git
     )
 }
 
