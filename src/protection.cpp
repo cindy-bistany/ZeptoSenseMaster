@@ -8,7 +8,8 @@
 
 //********** ADXL345 COMMUNICATION ***********
 void ADXL_ISR();
-void checkAccel();
+void accel_poweron();
+void accel_check();
 void setup_adxl345();
 #line 4 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/protection.ino"
 ADXL345 adxl = ADXL345();             // USE FOR ACCEL COMMUNICATION in I2C mode
@@ -20,7 +21,9 @@ void ADXL_ISR() {
   accelInterrupt=true; 
 }
 
-void checkAccel()
+void accel_poweron() { adxl.powerOn(); }
+
+void accel_check()
 {
   // Not ideal to have this in the loop
   if (accelInterrupt)
@@ -130,7 +133,12 @@ void setup_adxl345()
   delay(300);  
 }
 
-setup_protection()
+setup_accelerometer()
 {
   setup_adxl345();
+}
+
+setup_protection()
+{
+  setup_accelerometer();
 }

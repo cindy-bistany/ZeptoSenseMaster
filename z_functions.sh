@@ -23,8 +23,10 @@ git config --global user.email william.a.white.iii@zeptive.com
 # run the Particle "make clean:" script
 #
 function z_make_clean() {
-    echo -n
-    #does not work
+    echo "z_make_clean does not work yet."
+    #probably just delete all the target directories
+
+    #none of this stuff works
     #/home/white3/.particle/toolchains/deviceOS/1.5.2/modules/argon/system-part1/makefile
     #/home/white3/.particle/toolchains/deviceOS/1.5.2/modules/argon/user-part/makefile
     #make -f '/home/white3/.particle/toolchains/buildscripts/1.9.2/Makefile' clean-all
@@ -32,9 +34,9 @@ function z_make_clean() {
 }
 
 #
-#commit all changes in the project directory
+#commit all changes in the project directory to the cloud repo
 #
-function z_git_add_commit_all() {
+function z_backup() {
     if [ "${ZDIR}" == "" ]; then
 	echo ZDIR is not set
 	return
@@ -48,7 +50,9 @@ function z_git_add_commit_all() {
      git add --verbose .
      #git diff --cached
      git commit --verbose -a -m "${answer}"
-     git add remote origin https://cindy-bistany:Zeptive2019\!/ZeptoSenseMaster.git
+     git remote remove origin
+     git remote --verbose add origin https://cindy-bistany:Zeptosense2019\!@github.com/cindy-bistany/ZeptoSenseMaster.git
+     git push --verbose origin master
     )
 }
 

@@ -1,0 +1,456 @@
+#include "blynk.h"
+
+// BLYNK_WRITE is a function called every time device gets an update of Virtual Pin value from the server (or app):
+// Get the desired number of readings from the app
+BLYNK_WRITE(V10)
+{   
+  state.numberOfReadings = param.asInt(); // Get value as integer
+  //Save
+  saveState();
+  setAppWidgets();
+}
+
+BLYNK_WRITE(V12)
+{   
+  state.secondsBetweenReadings = param.asInt(); // Get value as integer
+  //Save to FRAM
+  saveState();
+  setAppWidgets();
+}
+
+void deepSleep()
+{
+  String statusMessage;
+  StateString = "STBY";
+  unsigned long elapsed = millis() - CycleOnTime;
+  state.OnTime=state.OnTime+elapsed;
+  //Save
+  saveState();
+
+  if (timeSynced)
+  {
+       statusMessage = StateString+" "+Time.format(rtc.rtcNow()+gmtOffsetSeconds,"%h%e %R")+" "+field7+"%";
+
+  }
+  else
+  {
+       statusMessage = StateString+"                "+field7+"%";
+  }
+  Blynk.virtualWrite(V30,statusMessage);
+  delay(3000);
+  power.setPowerON(EXT3V3,false);
+  power.setPowerON(EXT5V,false);
+  // Release I2C bus for expander
+  if (!Wire.isEnabled()) {
+    Wire.end();
+  }  
+
+  debug("Going to sleep\n");
+  #if Wiring_Cellular
+  if (!state.bSleepModeStandby)
+    Cellular.off();
+  #endif
+  #if Wiring_WiFi
+  WiFi.off();
+  // For wifi FORCE DEEPSLEEP no stanby
+  state.bSleepModeStandby=false;
+  state.bInSleepMode=false;
+  #endif  
+
+  delay(1000);
+  if (state.bSleepModeStandby){
+    debug("Going to standby sleep\n");
+    state.bInSleepMode=true;
+    System.sleep(D8, RISING, 900, SLEEP_NETWORK_STANDBY);
+    return;
+  }
+  else{
+    debug("Going to deep sleep\n");
+    state.bSleepModeStandby=false;
+    state.bInSleepMode=true;
+    delay(2000);
+    System.sleep(SLEEP_MODE_DEEP); 
+    }
+}
+
+// Update app connection state
+BLYNK_APP_CONNECTED() {
+  appConnected = true;
+  setAppWidgets();
+  debug("Connected\n");
+}
+
+BLYNK_APP_DISCONNECTED() {
+// Your code here
+ appConnected = false;
+ debug("Disconnected\n");
+}
+
+// Update the App UI widgets as needed
+void setAppWidgets()
+{
+  Blynk.virtualWrite(V11, state.numberOfReadings);
+  Blynk.virtualWrite(V13, state.secondsBetweenReadings);
+  Blynk.virtualWrite(V15, state.zeroOff);
+}
+
+void initializeAppWidgets()
+{
+  Blynk.virtualWrite(V10, state.numberOfReadings);
+  Blynk.virtualWrite(V12, state.secondsBetweenReadings);
+  Blynk.virtualWrite(V11, state.numberOfReadings);
+  Blynk.virtualWrite(V13, state.secondsBetweenReadings);
+  Blynk.virtualWrite(V20, state.expression);
+  Blynk.virtualWrite(V16, state.email);
+  Blynk.virtualWrite(V18, state.batEmail);
+  Blynk.virtualWrite(V26, state.tamperEmail);
+  Blynk.virtualWrite(V15, state.zeroOff);
+  Blynk.virtualWrite(V25, state.batThreshold);
+  Blynk.virtualWrite(V23, state.deviceZone);
+ // Blynk.virtualWrite(V24, state.buzzerActivated);
+  Blynk.virtualWrite(V22,"Enter code to reset");
+  // New Pins
+  Blynk.virtualWrite(V24, state.buzzerTamper); // Buzzer Tamper
+  Blynk.virtualWrite(V27, state.buzzerVapor); // Vapor Buzzer
+  Blynk.virtualWrite(V28, state.notifyVapor); // Vapor Notify
+  Blynk.virtualWrite(V29, state.notifyTamper); // Tamper Notify
+  Blynk.virtualWrite(V32, state.notifyBattery); // Battery Notify
+  if (state.ActivityThreshold==144)
+  	Blynk.virtualWrite(V31, 3); // Tamper Setting Hammer
+  else  if (state.ActivityThreshold==72)
+  	Blynk.virtualWrite(V31, 1); // Tamper Setting feather
+  else
+  	Blynk.virtualWrite(V31, 2); // Tamper Setting default
+
+  if (terminalDebug) Blynk.virtualWrite(V21, "Initialized default values");
+  state.firstRunCheck = firstRunValue;
+  state.bSleepModeStandby=true;
+  state.bInSleepMode=false;
+  debug("Finished Initialization\n");
+  saveState();
+}
+
+BLYNK_WRITE(V22) //Reset Expression
+{
+  String _resetKey = param.asStr();
+  if (_resetKey.equals("resetme"))
+  {
+    Blynk.virtualWrite(V22,"Enter code to reset");
+    state.numberOfReadings = 15;
+    state.secondsBetweenReadings=5;
+    state.firstRunCheck = 0;
+    state.bSleepModeStandby=true;
+    state.bInSleepMode=false;
+    state.zeroOff = 0;
+    strcpy(state.expression,"Enter expression here");
+    strcpy(state.email,"Enter email here");
+    strcpy(state.batEmail,"Enter email here");
+    strcpy(state.tamperEmail,"Enter email here");
+    state.deviceZone=0;
+    state.batThreshold = 20;
+    state.lastAlert=false;
+    state.batLastAlert=false;
+    state.ActivityThreshold=100; // Which is set to 1 in Blynk
+    state.buzzerTamper=true;  // Buzzer Tamper
+    state.buzzerVapor=false; // Vapor Buzzer
+    state.notifyVapor=true; // Vapor Notify
+    state.notifyTamper=true; // Tamper Notify
+    state.notifyBattery=true; // Battery Notify
+    state.OnTime=0;
+    Blynk.virtualWrite(V10, state.numberOfReadings);
+    Blynk.virtualWrite(V12, state.secondsBetweenReadings);
+    Blynk.virtualWrite(V11, state.numberOfReadings);
+    Blynk.virtualWrite(V13, state.secondsBetweenReadings);
+    Blynk.virtualWrite(V20, state.expression);
+    Blynk.virtualWrite(V16, state.email);
+    Blynk.virtualWrite(V18, state.batEmail);
+    Blynk.virtualWrite(V26, state.tamperEmail);
+    Blynk.virtualWrite(V15, state.zeroOff);
+    Blynk.virtualWrite(V25, state.batThreshold);
+    Blynk.virtualWrite(V23, state.deviceZone);
+    Blynk.virtualWrite(V24, state.buzzerTamper);  // Buzzer Tamper
+    Blynk.virtualWrite(V27, state.buzzerVapor); // Vapor Buzzer
+    Blynk.virtualWrite(V28, state.notifyVapor); // Vapor Notify
+    Blynk.virtualWrite(V29, state.notifyTamper); // Tamper Notify
+    Blynk.virtualWrite(V31, 2); // Which is 100 for the accelerometer
+    Blynk.virtualWrite(V32, state.notifyBattery); // Battery Notify
+    // EEPROM.clear();
+    fram.erase();
+    Blynk.virtualWrite(V21, "Hard Resetting");
+    debug("Hard Resetting\n");
+    delay(500);
+    System.reset();
+  }
+}
+
+// This function will run every time Blynk connection is established
+BLYNK_CONNECTED() {
+  // Request Blynk server to re-send latest values for all pins
+  debug("Blynk is now connected - syncing all pins.\n");
+  if (state.firstRunCheck != firstRunValue)
+  {
+    initializeAppWidgets();
+  }
+  Blynk.syncAll();
+  // You can also update individual virtual pins like this:
+  //Blynk.syncVirtual(V0, V2);
+}
+
+BLYNK_WRITE(V20) //Alarm Expression
+{
+  String _expression = param.asStr();
+  //Only lower case is allowed
+  _expression.toLowerCase();
+  strcpy(state.expression,_expression.c_str());
+  saveState();
+  if (sensorValid)
+  {
+    runExpression(state.expression);
+  }
+}
+
+BLYNK_WRITE(V16) //Email Expression
+{
+  String _email = param.asStr();
+  //Add validation later
+  bool checkEmail = true;
+  _email.toLowerCase();
+  if (checkEmail)
+  {
+    strcpy(state.email,_email.c_str());
+    saveState();
+  }
+  else
+  {
+    Blynk.virtualWrite(V16, "Invalid address");
+  }
+  
+}
+
+BLYNK_WRITE(V18) //Email Expression
+{
+  String _email = param.asStr();
+  //Add validation later
+  bool checkEmail = true;
+  _email.toLowerCase();
+  if (checkEmail)
+  {
+    strcpy(state.batEmail,_email.c_str());
+    saveState();
+  }
+  else
+  {
+    Blynk.virtualWrite(V18, "Invalid address");
+  }
+  
+}
+
+BLYNK_WRITE(V26) //Email Expression
+{
+  String _email = param.asStr();
+  //Add validation later
+  bool checkEmail = true;
+  _email.toLowerCase();
+  if (checkEmail)
+  {
+    strcpy(state.tamperEmail,_email.c_str());
+    saveState();
+  }
+  else
+  {
+    Blynk.virtualWrite(V26, "Invalid address");
+  }
+  
+}
+// Calibration
+BLYNK_WRITE(V14) 
+{
+  if (param.asInt()==1)
+  {
+    state.zeroOff = sensor1.zero();
+    saveState();
+    Blynk.virtualWrite(V15, state.zeroOff);
+  }
+  Blynk.virtualWrite(V14, 0);
+  // Since data will be invalid save the new calibration and reset
+  delay(4000);
+  System.reset();
+}
+
+//Battery threshold
+BLYNK_WRITE(V25) 
+{
+  float thresh = param.asFloat();
+  state.batThreshold=thresh;
+  saveState();
+}
+
+BLYNK_WRITE(V17) 
+{
+  #ifdef BEEP
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    delay(200);  
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+  #endif
+  if (param.asInt()==1)
+  {
+    terminalDebug = false;
+  }
+  else
+  {
+    terminalDebug = true;
+  }
+}
+
+// Update time zone
+BLYNK_WRITE(V23) 
+{
+    #ifdef BEEP
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    delay(200);  
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    #endif
+    state.deviceZone=param.asInt();
+#ifdef KURTDEBUG
+    debug("*****Device Zone value is: ");
+    debug(state.deviceZone + "\n");
+#endif
+    gmtOffsetValid=false;
+  saveState();
+}
+// Update buzzerTamper flag
+BLYNK_WRITE(V24) 
+{
+    #ifdef BEEP
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    delay(200);  
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    #endif
+    state.buzzerTamper=param.asInt();
+  saveState();
+
+#ifdef KURTDEBUG
+    debug("*****Update buzzerTamper flag value is: ");
+    debug(state.buzzerTamper + "\n");
+#endif
+}
+// Update buzzerVapor flag
+BLYNK_WRITE(V27) 
+{
+    #ifdef BEEP
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    delay(200);  
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    #endif
+    state.buzzerVapor=param.asInt();
+  saveState();
+#ifdef KURTDEBUG
+    debug("*****Update buzzerVapor flag value is: ");
+    debug(state.buzzerVapor + "\n");
+#endif
+}
+// Update notifyVapor flag
+BLYNK_WRITE(V28) 
+{
+    #ifdef BEEP
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    delay(200);  
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    #endif
+    state.notifyVapor=param.asInt();
+  saveState();
+#ifdef KURTDEBUG
+    debug("*****Update notifyVapor flag value is: ");
+    debug(state.notifyVapor + "\n");
+#endif
+}
+// Update notifyTamper flag
+BLYNK_WRITE(V29) 
+{
+    #ifdef BEEP
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    delay(200);  
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    #endif
+    state.notifyTamper=param.asInt();
+  saveState();
+#ifdef KURTDEBUG
+    debug("*****Update notifyTamper flag value is: ");
+    debug(state.notifyTamper + "\n");
+#endif
+}
+
+//Accelerometer threshold
+BLYNK_WRITE(V31) 
+{
+  int thresh = param.asInt();
+  int oldvalue=state.ActivityThreshold;
+
+#ifdef KURTDEBUG
+    debug("*****Update Accelerometer threshold value is: ");
+    debug(thresh + "\n");
+#endif
+  state.ActivityThreshold=100;
+  if (thresh==3)
+  	state.ActivityThreshold=144;
+  if (thresh==2)
+  	state.ActivityThreshold=100;
+  if (thresh==1)
+  	state.ActivityThreshold=72;
+  // If value changed since the acceleromter will need to be reinitalized save the new value and reset
+  if (state.ActivityThreshold != oldvalue)
+  {
+#ifdef KURTDEBUG
+    debug("Update Accelerometer value is: ");
+    debug(state.ActivityThreshold + "\n");
+    debug("Will reset system ");
+#endif
+    saveState();
+    delay(4000);
+    System.reset();
+  }
+}
+
+// Update notifyBattery flag
+BLYNK_WRITE(V32) 
+{
+    #ifdef BEEP
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    delay(200);  
+    digitalWrite(buzzer, HIGH);
+    delay(5);
+    digitalWrite(buzzer, LOW);
+    #endif
+    state.notifyBattery=param.asInt();
+  saveState();
+#ifdef KURTDEBUG
+    debug("Update notifyBattery flag value is: ");
+    debug(state.notifyBattery + "\n");
+#endif
+}

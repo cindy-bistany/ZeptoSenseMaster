@@ -1,4 +1,53 @@
-void hw_wakeup()
+#include <IoTNodePower.h>
+MB85RC256V fram(Wire, 0);
+
+IoTNodePower power;
+FuelGauge fuel;
+///////////////////////
+
+  // ULP - Library for reading SPEC Sensors ULP.
+  // Created by David E. Peaslee, OCT 27, 2017.
+  // Released into the SPEC Sensors domain.
+
+
+  // The library is built to use several SPEC ULP sensors. An Arduino Uno can handle 3 sensors, since 2 analog pins are required for each sensor.
+  // Functions include getTemp(seconds, C/F): returns temperature, setTSpan(seconds, "HIGH"/"LOW"): for calibrating temperature, setVref(R1,R2,R3) for custom sensors,
+  // getVgas(seconds): for getting voltage of sensor, getConc(seconds, temperature in degC): for getting temperature corrected concentration,
+  // setXSpan(): for setting the calibration factor with known concentration of gas. Variable include _Vcc: the voltage ref of the ADC, _Vsup: the voltage to the ULP, 
+  // and _Gain the value of resistor R6. For more details see ULP.cpp in the libraries folder and the data sheet at http://www.spec-sensors.com/wp-content/uploads/2016/06/Analog-SDK-Users-Manual-v18.pdf
+
+
+// As an example, the ULP is connected this way: Vgas (pin1) to A0, Vtemp (Pin3) to A3, Gnd (Pin6) to Gnd, V+ (Pin7 or Pin8) to 3.3V of Arduino (must not be above 3.3V!!!).
+
+// These constants won't change.  They're used to give names to the pins used and to the sensitivity factors of the sensors:
+
+//const int C1 = A2;
+//const int T1 = A4;
+
+const float Sf1 = 4.05; //nA/ppm replace this value with your own sensitivity
+
+
+float conc1, temp1;
+float TZero;
+float Vzero1;
+
+IAQ sensor1(A2, A4, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RESP, O3, and SPEC (custom)
+//IAQ sensor1(C1, T1, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RESP, O3, and SPEC (custom)
+//O3 sensor2(C2, T2, Sf2);  //Example O3
+//H2S sensor3(C3, T3, Sf3); //Example H2S
+
+//  Include these if using different boards with different voltages
+//float ULP::_Vcc = 5.0;  //analogRead Reference Voltage
+//float ULP::_Vsup =3.3;  //voltage supplied to V+ of ULP, ideally 3.3 Volts 
+
+String field1,field2,field3,field4,field5,field6,field7,field8;
+String datastring;
+
+
+//wake up from power off
+//bring up the baseboard, but be sure all other power is turned off.
+//
+void setup_basehw()
 {
   Wire.setSpeed(20000);
   // Debug console
@@ -15,6 +64,68 @@ void hw_wakeup()
   Wire.begin();
   delay(100);
   debug("Start Setup section after a sleep\n");
+
+  setup_expander();
+  setup_power();
+  setup_i2c();
+  setup_rtc();
+
+  // Load state
+  loadState();
+ 
+  readingCount=0;
+  state.bInSleepMode=false;
+}
+
+void setup_power() {
+  
+  power.begin();
+  power.setPowerON(EXT3V3,true);
+  power.setPowerON(EXT5V,true);
+  // Allow time to settle
+  //delay(100);
+}
+
+void setup_i2c()
+{
+  debug("Checking i2c devices...\n");
+  bool i2cOK = checkI2CDevices(i2cNames, i2cAddr, i2cLength, i2cExists);
+
+  for (size_t x=0; x < i2cLength; x++) {
+    debug(i2cNames[x]);
+    debug(": ");
+    debug(i2cExists[x] + "\n");
+  }
+  
+  if (!i2cOK) {
+      StateString = "ERR";
+      debug("I2C Issue\n");
+      RGB.control(true);
+      // the following sets the RGB LED to red
+      RGB.color(255, 0, 0);
+      delay(3000);
+      // resume normal operation
+      RGB.control(false);    
+      //Generate 9 pulses on SCL to tell slave to release the bus 
+      Wire.reset();     
+      if (!Wire.isEnabled())
+        Wire.begin();
+      Wire.end();
+    }
+  else {
+    StateString = "RDY";
+    debug("I2C OK\n");
+    beep("111011101110");
+  }
+  delay(200);
+  if (!i2cOK)
+    {
+      System.reset();
+    }
+}
+
+void setup_expander()
+{
 
   ///////////////////////////////////////////////////////////
   // CHECK TO MAKE SURE THE EXPANDER CAN BE SEEN
@@ -50,113 +161,6 @@ void hw_wakeup()
       delay(3000);
       System.reset();
     }
-  power_wakeup();
-  i2c_wakeup();
-  rtc_wakeup();
-  detection_wakeup();
-  protection_wakeup();
-
-  // Load state
-  loadState();
- 
-
-  setup_detection();
-    
-  readingCount=0;
-  state.bInSleepMode=false;
-}
-
-hw_poweron() {
-  
-  power.begin();
-  power.setPowerON(EXT3V3,true);
-  power.setPowerON(EXT5V,true);
-  // Allow time to settle
-  //delay(100);
-}
-
-  uint32_t d1=0;
-  fram.readData(0, (uint8_t *)&d1, sizeof(d1));
-  Serial1.printlnf("d1=%u", d1);
-
-  debug("Checking i2c devices...\n");
-
-void hw_i2con()
-{
-  bool i2cOK = checkI2CDevices(i2cNames, i2cAddr, i2cLength, i2cExists);
-
-  for (size_t x=0; x < i2cLength; x++) {
-    debug(i2cNames[x]);
-    debug(": ");
-    debug(i2cExists[x] + "\n");
-  }
-  
-  if (!i2cOK) {
-      StateString = "ERR";
-      debug("I2C Issue\n");
-      RGB.control(true);
-      // the following sets the RGB LED to red
-      RGB.color(255, 0, 0);
-      delay(3000);
-      // resume normal operation
-      RGB.control(false);    
-#ifdef BEEP
-      digitalWrite(buzzer, HIGH);
-      delay(100);
-      digitalWrite(buzzer, LOW);
-#endif
-      //Generate 9 pulses on SCL to tell slave to release the bus 
-      Wire.reset();     
-      if (!Wire.isEnabled())
-        Wire.begin();
-      Wire.end();
-    }
-  else {
-    StateString = "RDY";
-    debug("I2C OK\n");
-    beep(0b111011101110);
-    /*
-#ifdef BEEP
-    digitalWrite(buzzer, HIGH);
-    delay(5);
-    digitalWrite(buzzer, LOW);
-    delay(200);  
-    digitalWrite(buzzer, HIGH);
-    delay(5);
-    digitalWrite(buzzer, LOW);
-    delay(200);  
-    digitalWrite(buzzer, HIGH);
-    delay(5);
-    digitalWrite(buzzer, LOW);
-#endif
-    */
-  }
-  delay(200);
-  if (!i2cOK)
-    {
-      System.reset();
-    }
-}
-
-hw_rtcon()
-{
-  long int clockTime = rtc.rtcNow();
-  debug("Before\n");
-  debug(clockTime);
-  debug(": \n");
-  debug(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)) + "\n");
-  if (clockTime<946684800||clockTime>4102444799)
-    {
-      // 2019-01-01T00:00:00+00:00 in ISO 8601
-      // Actual time is not important for rtc reset but needs to be a positive unix time
-      rtc.setUnixTime(1262304000);
-      long int clockTime = rtc.rtcNow();
-      debug("After\n");
-      debug(clockTime);
-      debug(": \n");
-      debug(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)) + "\n");
-    }
-  timeSynced=false;
 }
 
 

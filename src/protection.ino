@@ -118,16 +118,19 @@ void setup_adxl345()
   // Need to set int1 pin as an input before calling atttachInterrupt
   pinMode(interruptPin,INPUT);
   attachInterrupt(interruptPin, ADXL_ISR, CHANGE);
-
-  delay(300);  
 }
 
-setup_accelerometer()
+void setup_accelerometer()
 {
   setup_adxl345();
 }
 
-setup_protection()
+void setup_protection()
 {
   setup_accelerometer();
+}
+
+void loop_protection()
+{
+  //since it's an interrupt, nothing to service in the loop.
 }
