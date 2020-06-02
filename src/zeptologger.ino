@@ -23,12 +23,16 @@ setup()
 
 loop()
 {
+#define INACTIVITYSLEEP 10000 //ms
+  if (PIR) currentState.lastPIR = millis();
   loop_basehw(&currentState);
   loop_clock(&currentState);
   loop_protection(&currentState);
   loop_detection(&currentState);
   loop_alerts(&currentState);
   loop_backhaul(&currentState);
+  if ((millis() - lastPIR) > INACTIVITYSLEEP)
+    deepSleep(currentState);
 }
 
 
@@ -111,15 +115,6 @@ bool tamperAlertChanged(Zstate *st)
   return true;
 }
 
-void gmtOffsetHandler(const char *event, const char *data) {
-  // Handle the integration response
-  gmtOffsetSeconds=atoi(data);
-  gmtOffsetValid = true;
-  debug("GMT seconds offset is: ");
-  debug(gmtOffsetSeconds + "\n");
-}
-
-
 void timerSleep(long seconds)
 {
   String statusMessage;
@@ -169,32 +164,3 @@ void activateAlarmPowerdown()
  rtc.publishAlarm0Debug();
     
 }
-void publishGMTOffsetRequest()
-{
-  // Send to https://timezonedb.com webhook for gmtOffset
-  debug("publishGMTOffsetRequest Device Zone value is: ");
-  debug(state.deviceZone + "\n");
-  switch (state.deviceZone)
-  {
-    case 0:
-      // America/New_York
-      Particle.publish("gmtOffset", "America/New_York", PRIVATE);
-      break;
-    case 1:
-      // America/Chicago
-      Particle.publish("gmtOffset", "America/Chicago", PRIVATE);
-      break;
-    case 2:
-      // America/Phoenix
-      Particle.publish("gmtOffset", "America/Phoenix", PRIVATE);
-      break;
-    case 3:
-      // America/Los_Angeles
-      Particle.publish("gmtOffset", "America/Los_Angeles", PRIVATE);
-      break;
-    default:
-      // America/New_York
-      Particle.publish("gmtOffset", "America/New_York", PRIVATE);  
-  }
-}
-

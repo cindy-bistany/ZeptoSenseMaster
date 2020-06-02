@@ -59,21 +59,47 @@ typedef struct {
 } Zconfig;
 
 void zconfig_clear(ZBlynk *zbc) {
+  zbc->firstRunCheck = 0;
+
+  zbc->numberOfReadings = 15;
+  zbc->secondsBetweenReadings=5;
+  zbc->readingCount = 0;
+
+  zbc->zeroOff = 0;
+  strcpy(zbc->expression,"Enter expression here");
+  strcpy(zbc->email,"Enter email here");
+  strcpy(zbc->batEmail,"Enter email here");
+  strcpy(zbc->tamperEmail,"Enter email here");
+  
+  zbc->batThreshold = 20;
+  zbc->deviceZone = 0;
+  zbc->lastAlert = false;
+  zbc->batLastAlert = false;
+  zbc->buzzerTamper = true;  // Buzzer Tamper
+  zbc->buzzerVapor = false; // Vapor Buzzer
+  zbc->notifyVapor = true; // Vapor Notify
+  zbc->notifyTamper = true; // Tamper Notify
+  zbc->notifyBattery = true; // Battery Notify
+
+  zbc->ActivityThreshold = 100; // Which is set to 1 in Blynk
+  zbc->OnTime = 0;
+
   zbc->CycleOnTime = 0;
-  xbc->VapeAlertTime = 0;
+  zbc->VapeAlertTime = 0;
   zbc->VapeBuzzerOn = false;
   zbc->VapeAlertBuzzerTime = 0;
-  xbc->mytime = 0;
-  xbc->readingCount = 0;
+
   zbc->buzzer = D7;
   zbc->gmtOffsetSeconds = -14400;
-  xbc->gmtOffsetValid = false;
-  xbc->timeSynced = false;
+  zbc->gmtOffsetValid = false;
+  zbc->timeSynced = false;
+  zbc->bSleepModeStandby=true;
+  zbc->bInSleepMode=false;
 }
 
 typedef struct {
   // Flag to keep track of accel interrupts
-  bool accelInterrupt = false;
+  bool accelInterrupt;
   float mass_concen[4];
   float num_concen[5];
   bool powerOn, appConnected, sensorValid, currentAlert,
@@ -136,6 +162,7 @@ void zstate_init(Zstate st)
     st->deviceZone=0; //America/New_York
     zstate_save();
 }
+
 
 void state_restore(ZState *st)
 {

@@ -17,6 +17,7 @@
 //delete leading zeroes, replace with 6 beep quanta of quiet
 //
 //leading to morse code here eventually
+//for now beep("000111000") or (beep"...---...") will produce morse SOS
 //
 #define dot_length 100 //ms sound for a morse dot
 #define dash_length (3*dot_length)
@@ -44,5 +45,26 @@ void beep(string s) {
       break;
     }
   }
+}
+
+void deepSleep(zState *st)
+{
+  shutdown_basehw(st);
+  state_save(st);
+  debug("Going to sleep\n");
+  
+  if (state.bSleepModeStandby){
+    debug("Going to standby sleep\n");
+    state.bInSleepMode=true;
+    System.sleep(D8, RISING, 900, SLEEP_NETWORK_STANDBY);
+    return;
+  }
+  else{
+    debug("Going to deep sleep\n");
+    state.bSleepModeStandby=false;
+    state.bInSleepMode=true;
+    delay(2000);
+    System.sleep(SLEEP_MODE_DEEP); 
+    }
 }
 

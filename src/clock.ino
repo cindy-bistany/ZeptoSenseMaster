@@ -44,3 +44,41 @@ void clockon()
   timeSynced=false;
 }
 
+void gmtOffsetHandler(const char *event, const char *data) {
+  // Handle the integration response
+  gmtOffsetSeconds=atoi(data);
+  gmtOffsetValid = true;
+  debug("GMT seconds offset is: ");
+  debug(gmtOffsetSeconds + "\n");
+}
+
+void publishGMTOffsetRequest()
+{
+  // Send to https://timezonedb.com webhook for gmtOffset
+  debug("publishGMTOffsetRequest Device Zone value is: ");
+  debug(state.deviceZone + "\n");
+  switch (state.deviceZone)
+  {
+    case 0:
+      // America/New_York
+      Particle.publish("gmtOffset", "America/New_York", PRIVATE);
+      break;
+    case 1:
+      // America/Chicago
+      Particle.publish("gmtOffset", "America/Chicago", PRIVATE);
+      break;
+    case 2:
+      // America/Phoenix
+      Particle.publish("gmtOffset", "America/Phoenix", PRIVATE);
+      break;
+    case 3:
+      // America/Los_Angeles
+      Particle.publish("gmtOffset", "America/Los_Angeles", PRIVATE);
+      break;
+    default:
+      // America/New_York
+      Particle.publish("gmtOffset", "America/New_York", PRIVATE);  
+  }
+}
+
+
