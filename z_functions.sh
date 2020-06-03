@@ -20,7 +20,7 @@ fi
 
 git config --global user.name "Bill White"
 git config --global user.email william.a.white.iii@zeptive.com
-GITREPO='https://cindy-bistany:ZeptoSense2019!@github.com/cindy-bistany/ZeptoSenseMaster.git'
+GITREPO='https://cindy-bistany:Zeptosense2019!@github.com/cindy-bistany/ZeptoSenseMaster.git'
 
 function z_() { . ${ZDIR}/z_functions.sh; }	#reload this file
 function z_rm~() { rm ${ZDIR}/*~ ${ZDIR}/src/*~; } #Delete emacs backup files
