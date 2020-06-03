@@ -20,10 +20,10 @@ fi
 
 git config --global user.name "Bill White"
 git config --global user.email william.a.white.iii@zeptive.com
-GITREPO="https://cindy-bistany:ZeptoSense2019\!@github.com/cindy-bistany/ZeptoSenseMaster.git"
+GITREPO='https://cindy-bistany:ZeptoSense2019\!@github.com/cindy-bistany/ZeptoSenseMaster.git'
 
 function z_() { . ${ZDIR}/z_functions.sh; }	#reload this file
-function zrm~() { rm ${ZDIR}/*~ ${ZDIR}/src/*~; } #Delete emacs backup files
+function z_rm~() { rm ${ZDIR}/*~ ${ZDIR}/src/*~; } #Delete emacs backup files
 
 
 #
@@ -32,8 +32,9 @@ function zrm~() { rm ${ZDIR}/*~ ${ZDIR}/src/*~; } #Delete emacs backup files
 function z_make_clean() {
     zrm~
     for d in `ls -1 ${ZDIR}/target`; do
-	(cd ${ZDIR}/target/${d}
-	 rm -rf *
+	(
+	    cd ${ZDIR}/target/${d}
+	    rm -rf *
 	)
     done
 }
@@ -56,7 +57,7 @@ function z_backup() {
      #git diff --cached
      git commit --verbose -a -m "${answer}"
      git remote remove origin
-     git remote --verbose add origin ${GITREPO}
+     git remote --verbose add origin "${GITREPO}"
      git push --verbose origin master
     )
 }
