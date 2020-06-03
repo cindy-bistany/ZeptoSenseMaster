@@ -4,17 +4,20 @@
 
 #include "Particle.h"
 #line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/clock.ino"
+// emacs -*- c++ -*-
+#include "zstate.h"
+
 // Create new instance of RTC class:
 // Use to hard power cycle the device to reset I2C
-void setup_clock();
+void setup_clock(Zstate *st);
 void loop_clock();
 void clockon();
 void gmtOffsetHandler(const char *event, const char *data);
 void publishGMTOffsetRequest();
-#line 3 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/clock.ino"
+#line 6 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/clock.ino"
 MCP7941x rtc = MCP7941x();
 
-void setup_clock()
+void setup_clock(Zstate *st)
 {  
   // Sync time if needed
   if (Time.isValid()&&!timeSynced)

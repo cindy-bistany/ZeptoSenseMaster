@@ -1,8 +1,11 @@
+// emacs -*- c++ -*-
+#include "zstate.h"
+
 // Create new instance of RTC class:
 // Use to hard power cycle the device to reset I2C
 MCP7941x rtc = MCP7941x();
 
-void setup_clock()
+void setup_clock(Zstate *st)
 {  
   // Sync time if needed
   if (Time.isValid()&&!timeSynced)
@@ -22,6 +25,8 @@ void setup_clock()
 void loop_clock()
 {
 }
+
+unsigned long clocknow() { return rtc.rtcNow(); }
 
 void clockon()
 {

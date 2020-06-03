@@ -24,10 +24,10 @@ setup()
   //just waking up from power off
   unsigned long wakeupTime = millis();	//note what time we woke up
   
-  restore_state(&currentState);		//restore prev or init new state
+  currentState.load();		//restore prev or init new state
   currentState.wakeupTime = wakeupTime;	//note the original wake up time.
   
-  setup_basehw(&currentState);
+  setup_basehw(currentState);
   setup_clock(&currentState);
   setup_protection(&currentState);
   setup_detection(&currentState);

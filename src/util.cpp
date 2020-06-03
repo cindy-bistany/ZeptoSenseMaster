@@ -4,19 +4,7 @@
 
 #include "Particle.h"
 #line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/util.ino"
-void beep(string s);
-void deepSleep(zState *st);
-#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/util.ino"
-#define SERIAL_DEBUG
-#define KURTDEBUG
-
-#ifdef SERIAL_DEBUG
-  #define debug(...) Serial1.print(__VA_ARGS__)
-  #define debugf(...) Serial1.printf(__VA_ARGS__)
-#else
-  #define debug(...)
-  #define debugf(...)
-#endif
+#include "zstate.h"
 
 
 //make a loop to go through the bit pattern parameter
@@ -28,6 +16,9 @@ void deepSleep(zState *st);
 //leading to morse code here eventually
 //for now beep("000111000") or (beep"...---...") will produce morse SOS
 //
+void beep(string s);
+void deepSleep(Zstate *st);
+#line 13 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/util.ino"
 #define dot_length 100 //ms sound for a morse dot
 #define dash_length (3*dot_length)
 #define char_space dash_length
@@ -54,24 +45,25 @@ void beep(string s) {
       break;
     }
   }
+  buzzoff(); //belt & suspenders
 }
 
-void deepSleep(zState *st)
+void deepSleep(Zstate *st)
 {
   shutdown_basehw(st);
-  state_save(st);
+  st->save());
   debug("Going to sleep\n");
   
-  if (state.bSleepModeStandby){
+  if (st->bSleepModeStandby){
     debug("Going to standby sleep\n");
-    state.bInSleepMode=true;
+    st->bInSleepMode=true;
     System.sleep(D8, RISING, 900, SLEEP_NETWORK_STANDBY);
     return;
   }
   else{
     debug("Going to deep sleep\n");
-    state.bSleepModeStandby=false;
-    state.bInSleepMode=true;
+    st->bSleepModeStandby=false;
+    st->bInSleepMode=true;
     delay(2000);
     System.sleep(SLEEP_MODE_DEEP); 
     }

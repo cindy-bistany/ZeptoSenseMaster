@@ -1,3 +1,4 @@
+#include "zstate.h"
 
 // Install Information Set to 1 to configure the correct particle board
 //#define NM01

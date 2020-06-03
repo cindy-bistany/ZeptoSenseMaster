@@ -11,29 +11,31 @@
 # Sourcing the file defines them in the current shell.
 
 # Since we require this file to be in the project directory, let us make
-# the bad assumption that pwd is the project root ZDIR.
+# the risky assumption that pwd is the project root ZDIR.
 if [ "${ZDIR}" == "" ]; then
     ZDIR=${PWD}
+    echo "ZDIR = "${ZDIR}
 fi
 
-function z_() { . ${ZDIR}/z_functions.sh; }
-function rm~() { rm -f *~; }
 
 git config --global user.name "Bill White"
 git config --global user.email william.a.white.iii@zeptive.com
+GITREPO="https://cindy-bistany:Zeptosense2019\!@github.com/cindy-bistany/ZeptoSenseMaster.git"
+
+function z_() { . ${ZDIR}/z_functions.sh; }	#reload this file
+function zrm~() { rm ${ZDIR}/*~ ${ZDIR}/src/*~; } #Delete emacs backup files
+
 
 #
 # run the Particle "make clean:" script
 #
 function z_make_clean() {
-    echo "z_make_clean does not work yet."
-    #probably just delete all the target directories
-
-    #none of this stuff works
-    #/home/white3/.particle/toolchains/deviceOS/1.5.2/modules/argon/system-part1/makefile
-    #/home/white3/.particle/toolchains/deviceOS/1.5.2/modules/argon/user-part/makefile
-    #make -f '/home/white3/.particle/toolchains/buildscripts/1.9.2/Makefile' clean-all
-
+    zrm~
+    for d in `ls -1 ${ZDIR}/target`; do
+	(cd ${ZDIR}/target/${d}
+	 rm -rf *
+	)
+    done
 }
 
 #
@@ -44,7 +46,7 @@ function z_backup() {
 	echo ZDIR is not set
 	return
     fi
-    
+
     (cd $ZDIR
      local answer
      echo -n "Enter the commit message: "
@@ -54,7 +56,7 @@ function z_backup() {
      #git diff --cached
      git commit --verbose -a -m "${answer}"
      git remote remove origin
-     git remote --verbose add origin https://cindy-bistany:Zeptosense2019\!@github.com/cindy-bistany/ZeptoSenseMaster.git
+     git remote --verbose add origin ${GITREPO}
      git push --verbose origin master
     )
 }

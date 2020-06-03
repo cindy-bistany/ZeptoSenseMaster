@@ -1,13 +1,4 @@
-#define SERIAL_DEBUG
-#define KURTDEBUG
-
-#ifdef SERIAL_DEBUG
-  #define debug(...) Serial1.print(__VA_ARGS__)
-  #define debugf(...) Serial1.printf(__VA_ARGS__)
-#else
-  #define debug(...)
-  #define debugf(...)
-#endif
+#include "zstate.h"
 
 
 //make a loop to go through the bit pattern parameter
@@ -45,24 +36,25 @@ void beep(string s) {
       break;
     }
   }
+  buzzoff(); //belt & suspenders
 }
 
-void deepSleep(zState *st)
+void deepSleep(Zstate *st)
 {
   shutdown_basehw(st);
-  state_save(st);
+  st->save());
   debug("Going to sleep\n");
   
-  if (state.bSleepModeStandby){
+  if (st->bSleepModeStandby){
     debug("Going to standby sleep\n");
-    state.bInSleepMode=true;
+    st->bInSleepMode=true;
     System.sleep(D8, RISING, 900, SLEEP_NETWORK_STANDBY);
     return;
   }
   else{
     debug("Going to deep sleep\n");
-    state.bSleepModeStandby=false;
-    state.bInSleepMode=true;
+    st->bSleepModeStandby=false;
+    st->bInSleepMode=true;
     delay(2000);
     System.sleep(SLEEP_MODE_DEEP); 
     }
