@@ -2,6 +2,9 @@
 
 int firstRunValue = 31415; //a random number
 
+//####
+// Blynk config variables
+//#####
 typedef struct {
   uint16_t portBlynk;
 } ZBlynkconfig;
@@ -11,6 +14,9 @@ void zblynkconfig_clear(ZBlynk *zbc)
   zbc->portBlynk = 8080;
 }
 
+//#####
+// Zeptive config variables
+//#####
 typedef struct {
 
   int firstRunCheck;  //to detect the very first power up after flashing
@@ -97,6 +103,9 @@ void zconfig_clear(ZBlynk *zbc) {
   zbc->bInSleepMode=false;
 }
 
+//#####
+// Zeptive readings from sensors
+//#####
 typedef struct {
   // Flag to keep track of accel interrupts
   bool accelInterrupt;
@@ -115,9 +124,15 @@ void zreadings_clear(Zreadings *zrd) {
     zrd->terminalDebug =  zrd->batCurrentAlert = zrd->tamperCurrentAlert;
 }
 
+//#####
+// Zeptive alerts
+//#####
 typedef struct {
 } Zalerts;
 
+//#####
+// Zeptive entire state of system
+//#####
 typedef Zstate {
   ZBlinkconfig zbc;
   Zreadings zrd;
@@ -162,7 +177,6 @@ void zstate_init(Zstate st)
     st->deviceZone=0; //America/New_York
     zstate_save();
 }
-
 
 void state_restore(ZState *st)
 {

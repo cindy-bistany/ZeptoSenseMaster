@@ -4,11 +4,21 @@
 
 #include "Particle.h"
 #line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/readhw.ino"
-void hw_wakeup();
-void hw_i2con();
+#include <IoTNodePower.h>
+void setup_basehw();
+void shutdown_basehw(zState st);
+void setup_power();
+void setup_i2c();
+void setup_expander();
 void readings_get();
-#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/readhw.ino"
-void hw_wakeup()
+#line 2 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/readhw.ino"
+MB85RC256V fram(Wire, 0);
+
+
+//wake up from power off
+//bring up the baseboard, but be sure all other power is turned off.
+//
+void setup_basehw()
 {
   Wire.setSpeed(20000);
   // Debug console
@@ -25,6 +35,99 @@ void hw_wakeup()
   Wire.begin();
   delay(100);
   debug("Start Setup section after a sleep\n");
+
+  setup_expander();
+  setup_power();
+  setup_i2c();
+  setup_rtc();
+
+  // Load state
+  loadState();
+ 
+  readingCount=0;
+  state.bInSleepMode=false;
+}
+
+void shutdown_basehw(zState st)
+{
+  StateString = "STBY";
+  unsigned long elapsed = millis() - CycleOnTime;
+  state.OnTime=state.OnTime+elapsed;
+
+  String statusMessage = timeSynced ?
+    StateString + " " + Time.format(rtc.rtcNow() + gmtOffsetSeconds,"%h%e %R") + " " + field7 + "%"
+    : StateString + "                " + field7 + "%";
+  Blynk.virtualWrite(V30,statusMessage);
+  
+  delay(3000);
+  power.setPowerON(EXT3V3,false);
+  power.setPowerON(EXT5V,false);
+  // Release I2C bus for expander
+  if (!Wire.isEnabled()) Wire.end();
+
+  debug("Going to sleep\n");
+  
+  #if Wiring_Cellular
+  if (!state.bSleepModeStandby) Cellular.off();
+  #endif
+  
+  #if Wiring_WiFi
+  WiFi.off();
+  // For wifi FORCE DEEPSLEEP no stanby
+  state.bSleepModeStandby=false;
+  state.bInSleepMode=false;
+  #endif  
+}
+
+void setup_power() {
+  
+  power.begin();
+  power.setPowerON(EXT3V3,true);
+  power.setPowerON(EXT5V,true);
+  // Allow time to settle
+  //delay(100);
+}
+
+void setup_i2c()
+{
+  debug("Checking i2c devices...\n");
+  bool i2cOK = checkI2CDevices(i2cNames, i2cAddr, i2cLength, i2cExists);
+
+  for (size_t x=0; x < i2cLength; x++) {
+    debug(i2cNames[x]);
+    debug(": ");
+    debug(i2cExists[x] + "\n");
+  }
+  
+  if (!i2cOK) {
+      StateString = "ERR";
+      debug("I2C Issue\n");
+      RGB.control(true);
+      // the following sets the RGB LED to red
+      RGB.color(255, 0, 0);
+      delay(3000);
+      // resume normal operation
+      RGB.control(false);    
+      //Generate 9 pulses on SCL to tell slave to release the bus 
+      Wire.reset();     
+      if (!Wire.isEnabled())
+        Wire.begin();
+      Wire.end();
+    }
+  else {
+    StateString = "RDY";
+    debug("I2C OK\n");
+    beep("111011101110");
+  }
+  delay(200);
+  if (!i2cOK)
+    {
+      System.reset();
+    }
+}
+
+void setup_expander()
+{
 
   ///////////////////////////////////////////////////////////
   // CHECK TO MAKE SURE THE EXPANDER CAN BE SEEN
@@ -60,113 +163,6 @@ void hw_wakeup()
       delay(3000);
       System.reset();
     }
-  power_wakeup();
-  i2c_wakeup();
-  rtc_wakeup();
-  detection_wakeup();
-  protection_wakeup();
-
-  // Load state
-  loadState();
- 
-
-  setup_detection();
-    
-  readingCount=0;
-  state.bInSleepMode=false;
-}
-
-hw_poweron() {
-  
-  power.begin();
-  power.setPowerON(EXT3V3,true);
-  power.setPowerON(EXT5V,true);
-  // Allow time to settle
-  //delay(100);
-}
-
-  uint32_t d1=0;
-  fram.readData(0, (uint8_t *)&d1, sizeof(d1));
-  Serial1.printlnf("d1=%u", d1);
-
-  debug("Checking i2c devices...\n");
-
-void hw_i2con()
-{
-  bool i2cOK = checkI2CDevices(i2cNames, i2cAddr, i2cLength, i2cExists);
-
-  for (size_t x=0; x < i2cLength; x++) {
-    debug(i2cNames[x]);
-    debug(": ");
-    debug(i2cExists[x] + "\n");
-  }
-  
-  if (!i2cOK) {
-      StateString = "ERR";
-      debug("I2C Issue\n");
-      RGB.control(true);
-      // the following sets the RGB LED to red
-      RGB.color(255, 0, 0);
-      delay(3000);
-      // resume normal operation
-      RGB.control(false);    
-#ifdef BEEP
-      digitalWrite(buzzer, HIGH);
-      delay(100);
-      digitalWrite(buzzer, LOW);
-#endif
-      //Generate 9 pulses on SCL to tell slave to release the bus 
-      Wire.reset();     
-      if (!Wire.isEnabled())
-        Wire.begin();
-      Wire.end();
-    }
-  else {
-    StateString = "RDY";
-    debug("I2C OK\n");
-    beep(0b111011101110);
-    /*
-#ifdef BEEP
-    digitalWrite(buzzer, HIGH);
-    delay(5);
-    digitalWrite(buzzer, LOW);
-    delay(200);  
-    digitalWrite(buzzer, HIGH);
-    delay(5);
-    digitalWrite(buzzer, LOW);
-    delay(200);  
-    digitalWrite(buzzer, HIGH);
-    delay(5);
-    digitalWrite(buzzer, LOW);
-#endif
-    */
-  }
-  delay(200);
-  if (!i2cOK)
-    {
-      System.reset();
-    }
-}
-
-hw_rtcon()
-{
-  long int clockTime = rtc.rtcNow();
-  debug("Before\n");
-  debug(clockTime);
-  debug(": \n");
-  debug(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)) + "\n");
-  if (clockTime<946684800||clockTime>4102444799)
-    {
-      // 2019-01-01T00:00:00+00:00 in ISO 8601
-      // Actual time is not important for rtc reset but needs to be a positive unix time
-      rtc.setUnixTime(1262304000);
-      long int clockTime = rtc.rtcNow();
-      debug("After\n");
-      debug(clockTime);
-      debug(": \n");
-      debug(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)) + "\n");
-    }
-  timeSynced=false;
 }
 
 

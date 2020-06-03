@@ -16,6 +16,9 @@ if [ "${ZDIR}" == "" ]; then
     ZDIR=${PWD}
 fi
 
+function z_() { . ${ZDIR}/z_functions.sh; }
+function rm~() { rm -f *~; }
+
 git config --global user.name "Bill White"
 git config --global user.email william.a.white.iii@zeptive.com
 

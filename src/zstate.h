@@ -1,44 +1,33 @@
-/******************************************************/
-//       THIS IS A GENERATED FILE - DO NOT EDIT       //
-/******************************************************/
-
-#include "Particle.h"
-#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/state.ino"
 #include <MB85RC256V-FRAM-RK.h>
 
-void zblynkconfig_clear(ZBlynk *zbc);
-void zconfig_clear(ZBlynk *zbc);
-void zstate_save(Zstate *st);
-void zstate_load(Zstate *st);
-void zstate_init(Zstate st);
-void state_restore(ZState *st);
-void state_str(State st);
-#line 3 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/state.ino"
-int firstRunValue = 31415; //a random number
+const unsigned long firstRunValue = 31415; //a random number
 
-typedef struct {
-  uint16_t portBlynk;
-} ZBlynkconfig;
 
-void zblynkconfig_clear(ZBlynk *zbc)
-{
-  zbc->portBlynk = 8080;
-}
-
-typedef struct {
+//#####
+// Zeptive config variables
+//#####
+class Zconfig {
 
   int firstRunCheck;  //to detect the very first power up after flashing
   //check against firstRunValue above
+
+  int deviceTimeZone; //0=America/New_York, 1=America/Chicago, 2=America/Phoenix, 3=America/Los_Angeles
+
+  uint16_t portBlynk;
 
   int numberOfReadings;  //something to do with tracking the readings while looping
   int secondsBetweenReadings;
 
   float zeroOff;  //something for one of the sensors
+
+  int ActivityThreshold;  // accelerometer 62.5mg per increment-activity thresholds (0-255) 36,72,100 or 144
+  float batThreshold;  //something to do with charging the battery in the 2-layer battery arch
+  
   char expression[256];  //must be the test expression for raining alerts
   char email[256];  //main email for alerts I think
   char batEmail[256];  //email for battery alerts
   char tamperEmail[256];  //email for tamper alerts
-  float batThreshold;  //something to do with charging the battery in the 2-layer battery arch
+  
   bool lastAlert;  //guessing this is last vape alert
   bool batLastAlert;  //last battery alert, but so what?
   bool tamperLastAlert;  //last tamper alert, but so what?
@@ -53,12 +42,6 @@ typedef struct {
   bool notifyTamper; // Tamper Notify
   bool notifyBattery; // Battery Notify
 
-  //same Q here
-  int ActivityThreshold;  // 62.5mg per increment-activity thresholds (0-255) 36,72,100 or 144
-
-  //weird way to do a time zone
-  int deviceZone; //0=America/New_York, 1=America/Chicago, 2=America/Phoenix, 3=America/Los_Angeles
-
   //I think this is used for cellular.  telcos don't like constant re/dis/connecting, and shut you off when it happens
   //This must be used to sleep for a while but keeping the phone on.
   bool bSleepModeStandby; // If TRUE will do a SLEEP_NETWORK_STANDBY if FALSE will do a SLEEP_MODE_DEEP
@@ -70,68 +53,77 @@ typedef struct {
   //Good for use in conjunction with other battery indicators.
   int OnTime;
 
-} Zconfig;
-
-void zconfig_clear(ZBlynk *zbc) {
-  zbc->firstRunCheck = 0;
-
-  zbc->numberOfReadings = 15;
-  zbc->secondsBetweenReadings=5;
-  zbc->readingCount = 0;
-
-  zbc->zeroOff = 0;
-  strcpy(zbc->expression,"Enter expression here");
-  strcpy(zbc->email,"Enter email here");
-  strcpy(zbc->batEmail,"Enter email here");
-  strcpy(zbc->tamperEmail,"Enter email here");
-  
-  zbc->batThreshold = 20;
-  zbc->deviceZone = 0;
-  zbc->lastAlert = false;
-  zbc->batLastAlert = false;
-  zbc->buzzerTamper = true;  // Buzzer Tamper
-  zbc->buzzerVapor = false; // Vapor Buzzer
-  zbc->notifyVapor = true; // Vapor Notify
-  zbc->notifyTamper = true; // Tamper Notify
-  zbc->notifyBattery = true; // Battery Notify
-
-  zbc->ActivityThreshold = 100; // Which is set to 1 in Blynk
-  zbc->OnTime = 0;
-
-  zbc->CycleOnTime = 0;
-  zbc->VapeAlertTime = 0;
-  zbc->VapeBuzzerOn = false;
-  zbc->VapeAlertBuzzerTime = 0;
-
-  zbc->buzzer = D7;
-  zbc->gmtOffsetSeconds = -14400;
-  zbc->gmtOffsetValid = false;
-  zbc->timeSynced = false;
-  zbc->bSleepModeStandby=true;
-  zbc->bInSleepMode=false;
 }
 
-typedef struct {
+Zconfig::Zconfig() {
+  firstRunCheck = 0;
+
+  numberOfReadings = 15;
+  secondsBetweenReadings=5;
+  readingCount = 0;
+
+  zeroOff = 0;
+  strcpy(expression,"Enter expression here");
+  strcpy(email,"Enter email here");
+  strcpy(batEmail,"Enter email here");
+  strcpy(tamperEmail,"Enter email here");
+  
+  batThreshold = 20;
+  deviceZone = 0;
+  lastAlert = false;
+  batLastAlert = false;
+  buzzerTamper = true;  // Buzzer Tamper
+  buzzerVapor = false; // Vapor Buzzer
+  notifyVapor = true; // Vapor Notify
+  notifyTamper = true; // Tamper Notify
+  notifyBattery = true; // Battery Notify
+
+  ActivityThreshold = 100; // Which is set to 1 in Blynk
+  OnTime = 0;
+
+  CycleOnTime = 0;
+  VapeAlertTime = 0;
+  VapeBuzzerOn = false;
+  VapeAlertBuzzerTime = 0;
+
+  buzzer = D7;
+  gmtOffsetSeconds = -14400;
+  gmtOffsetValid = false;
+  timeSynced = false;
+  bSleepModeStandby=true;
+  bInSleepMode=false;
+}
+
+//#####
+// Zeptive readings from sensors
+//#####
+class Zreadings {
   // Flag to keep track of accel interrupts
   bool accelInterrupt;
   float mass_concen[4];
   float num_concen[5];
   bool powerOn, appConnected, sensorValid, currentAlert,
     terminalDebug, batCurrentAlert, tamperCurrentAlert;
-} Zreadings;
-
-void zreadings_clear(Zreadings *zrd) {
-  // Flag to keep track of accel interrupts
-  zrd->accelInterrupt = false;
-  for (int i=0; i<4; i++) zrd->mass_concen[i] = 0.0;
-  for (int i=0; i<5; i++) zrd->num_concen[5] = 0.0;
-  zrd->powerOn = zrd->appConnected = zrd->sensorValid = zrd->currentAlert =
-    zrd->terminalDebug =  zrd->batCurrentAlert = zrd->tamperCurrentAlert;
 }
 
+  void Zreadings::clear() {
+  // Flag to keep track of accel interrupts
+  accelInterrupt = false;
+  for (int i=0; i<4; i++) mass_concen[i] = 0.0;
+  for (int i=0; i<5; i++) num_concen[5] = 0.0;
+  powerOn = appConnected = sensorValid = currentAlert =
+    terminalDebug =  batCurrentAlert = tamperCurrentAlert = false;
+}
+
+//#####
+// Zeptive alerts
+//#####
 typedef struct {
 } Zalerts;
 
+//#####
+// Zeptive entire state of system
+//#####
 typedef Zstate {
   ZBlinkconfig zbc;
   Zreadings zrd;
@@ -176,7 +168,6 @@ void zstate_init(Zstate st)
     st->deviceZone=0; //America/New_York
     zstate_save();
 }
-
 
 void state_restore(ZState *st)
 {
