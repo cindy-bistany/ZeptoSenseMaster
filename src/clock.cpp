@@ -11,6 +11,7 @@
 // Use to hard power cycle the device to reset I2C
 void setup_clock(Zstate *st);
 void loop_clock();
+clock_t clocknow();
 void clockon();
 void gmtOffsetHandler(const char *event, const char *data);
 void publishGMTOffsetRequest();
@@ -37,6 +38,8 @@ void setup_clock(Zstate *st)
 void loop_clock()
 {
 }
+
+clock_t clocknow() { return rtc.rtcNow(); }
 
 void clockon()
 {

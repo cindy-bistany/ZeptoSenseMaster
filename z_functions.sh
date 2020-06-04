@@ -27,10 +27,11 @@ function z_rm~() { rm ${ZDIR}/*~ ${ZDIR}/src/*~; } #Delete emacs backup files
 
 
 #
-# run the Particle "make clean:" script
+# Clean up to avoid storing useless artifacts
+# Need to do this way due to Particle.io make file requiring huge context
 #
 function z_make_clean() {
-    zrm~
+    z_rm~
     for d in `ls -1 ${ZDIR}/target`; do
 	(
 	    cd ${ZDIR}/target/${d}

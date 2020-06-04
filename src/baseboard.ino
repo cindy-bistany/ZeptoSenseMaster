@@ -1,5 +1,7 @@
 // emacs -*- c++ -*-
+#include <math.h>
 #include <IoTNodePower.h>
+
 #include "zstate.h"
 
 
@@ -66,8 +68,8 @@ void shutdown_basehw(Zstate *st)
   unsigned long elapsed = millis() - st->wakeuptime;
   st->onTime += elapsed;
 
-  String statusMessage = st->timeSynced ?
-    st->stateStr + " " + Time.format(rtc.rtcNow() + st->gmtOffsetSeconds,"%h%e %R") + " " + st->batCharged + "%"
+  String statusMessage = st->timeIsSynchronized ?
+    st->stateStr + " " + Time.format(clock.rtcNow() + st->gmtOffsetSeconds,"%h%e %R") + " " + st->batCharged + "%"
     : st->stateStr + "                " + st->batCharge + "%";
   blynk_status_message(statusMessage);
   

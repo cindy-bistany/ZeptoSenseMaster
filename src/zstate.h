@@ -19,6 +19,7 @@
 
 //#####
 // Zeptive config variables
+// the original 
 //#####
 class Zstate {
  public:
@@ -26,18 +27,20 @@ class Zstate {
 
   unsigned long wakeuptime, onTime, backhaulTime;
 
-  int deviceTimeZone; //0=America/New_York, 1=America/Chicago, 2=America/Phoenix, 3=America/Los_Angeles
+  int deviceTimeZone;	//0=America/New_York, 1=America/Chicago, 2=America/Phoenix, 3=America/Los_Angeles
+  int gmtOffsetSeconds;
+  bool timeIsSynchronized;	//to what?
 
-  uint16_t portBlynk;
-  int portBuzzer; //docemented as D7, but what is D7?
+  uint16_t portBlynk;	//probably should be hived off into blynk
+  int portBuzzer;	//documented as D7, but what is D7?, maybe hive off into baseboard code
 
   String stateStr;
   
   int readingCount;	//some type of averaging I think
-  int numberOfReadings;  //something to do with tracking the readings while looping
+  int numberOfReadings; //something to do with tracking the readings while looping
   int secondsBetweenReadings;
 
-  float zeroOffset;  //something for one of the sensors
+  float zeroOffset;	//something for one of the sensors
 
   int activityThreshold;  // accelerometer 62.5mg per increment-activity thresholds (0-255) 36,72,100 or 144
   float batThreshold;  //something to do with charging the battery in the 2-layer battery arch

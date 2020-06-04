@@ -40,11 +40,19 @@ void Zstate::load()
 
 }
 
+const String factory_expression = "pm1>300||pm2>300||pm4>300||pm10>300&&conc>100||temp>150";
+const String factory_email	= "bistany@comcast.net";
+const String factory_batEmail	= "bistany@comcast.net");
+const String factory_tamperEmail= "bistany@comcast.net";
+
 void Zstate::factory_reset()
 {
-    // Set factory defaults
   build_random_number = BUILD_RANDOM_NUMBER;
-  deviceZone = 0; //America/New_York
+  
+  deviceTimeZone = 0; //America/New_York
+  gmtOffsetSeconds = 0;
+  timeIsSynchronized = false;
+  
   portBlynk = 8080;
   portBuzzer = D7;
 
@@ -55,11 +63,11 @@ void Zstate::factory_reset()
   readingCount = 0;
   numberOfReadings = 24;
   secondsBetweenReadings = 5;
-  zeroOff = -156;
-  strcpy(expression,"pm1>300||pm2>300||pm4>300||pm10>300&&conc>100||temp>150");
-  strcpy(email,"bistany@comcast.net");
-  strcpy(batEmail,"bistany@comcast.net");
-  strcpy(tamperEmail,"bistany@comcast.net");
+  zeroOffset = -156;
+  strcpy(expression, factory_expression);
+  strcpy(email, factory_email);
+  strcpy(batEmail, factory_batEmail);
+  strcpy(tamperEmail, factory_tamperEmail);
   batThreshold = 20.0;
   lastAlert = false;
   batLastAlert = false;

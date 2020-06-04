@@ -5,7 +5,9 @@
 #include "Particle.h"
 #line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/baseboard.ino"
 // emacs -*- c++ -*-
+#include <math.h>
 #include <IoTNodePower.h>
+
 #include "zstate.h"
 
 
@@ -13,11 +15,13 @@
 //bring up the baseboard, but be sure all other power is turned off.
 //
 void setup_basehw(Zstate *st);
+float baseboard_batteryLevel();
+float baseboard_signalStrength();
 void shutdown_basehw(Zstate *st);
 void setup_power(Zstate *st);
 void setup_i2c(Zstate *st);
 void setup_expander(Zstate *st);
-#line 9 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/baseboard.ino"
+#line 11 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/baseboard.ino"
 void setup_basehw(Zstate *st)
 {
   Wire.setSpeed(20000);
@@ -45,16 +49,43 @@ void setup_basehw(Zstate *st)
   st->bInSleepMode=false;
 }
 
+float baseboard_batteryLevel()
+{
+#if Wiring_Cellular
+  return fuel.getSoC();
+#endif
+
+#if Wiring_WiFi
+  float voltage = analogRead(BATT) * 0.0011224;
+  float batCharge = exp(5.0601*voltage)*0.0000001;
+  if (batCharge>100) batCharge = 100;
+  return batCharge;
+#endif
+
+  return -1;
+}
+
+float baseboard_signalStrength()
+{
+#if Wiring_Cellular
+    CellularSignal sig = Cellular.RSSI();
+#endif
+
+#if Wiring_WiFi
+    WiFiSignal sig = WiFi.RSSI();
+#endif
+}
+
 void shutdown_basehw(Zstate *st)
 {
   st->stateStr = "STBY";
   unsigned long elapsed = millis() - st->wakeuptime;
-  st->.onTime += elapsed;
+  st->onTime += elapsed;
 
-  String statusMessage = timeSynced ?
-    st->stateStr + " " + Time.format(rtc.rtcNow() + gmtOffsetSeconds,"%h%e %R") + " " + field7 + "%"
-    : st->stateStr + "                " + field7 + "%";
-  Blynk.virtualWrite(V30,statusMessage);
+  String statusMessage = st->timeIsSynchronized ?
+    st->stateStr + " " + Time.format(clock.rtcNow() + st->gmtOffsetSeconds,"%h%e %R") + " " + st->batCharged + "%"
+    : st->stateStr + "                " + st->batCharge + "%";
+  blynk_status_message(statusMessage);
   
   delay(3000);
   power.setPowerON(EXT3V3,false);

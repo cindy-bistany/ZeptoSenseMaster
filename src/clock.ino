@@ -26,7 +26,7 @@ void loop_clock()
 {
 }
 
-unsigned long clocknow() { return rtc.rtcNow(); }
+clock_t clocknow() { return rtc.rtcNow(); }
 
 void clockon()
 {
