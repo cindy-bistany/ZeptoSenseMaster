@@ -1,15 +1,33 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
+
+#include "Particle.h"
+#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/baseboard.ino"
 // emacs -*- c++ -*-
 #include <math.h>
 #include <IoTNodePower.h>
 
 #include "zstate.h"
-
+#include "util.h"
+#include "clock.h"
 
 //wake up from power off
 //bring up the baseboard, but be sure all other power is turned off.
 //
+void setup_basehw(Zstate *st);
+bool baseboard_batteryIsCharged();
+float baseboard_batteryLevel();
+float baseboard_signalStrength();
+void shutdown_basehw(Zstate *st);
+void setup_power(Zstate *st);
+void setup_i2c(Zstate *st);
+void setup_expander(Zstate *st);
+#line 12 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/baseboard.ino"
 void setup_basehw(Zstate *st)
 {
+  beep("---");
+  
   Wire.setSpeed(20000);
   // Debug console
   pinMode(D8, INPUT_PULLDOWN);
@@ -35,6 +53,10 @@ void setup_basehw(Zstate *st)
   st->bInSleepMode=false;
 }
 
+bool baseboard_batteryIsCharged()
+{
+}
+
 float baseboard_batteryLevel()
 {
 #if Wiring_Cellular
@@ -47,7 +69,7 @@ float baseboard_batteryLevel()
   if (batCharge>100) batCharge = 100;
   return batCharge;
 #endif
-
+  beep("...---...  ...---...");
   return -1;
 }
 
@@ -60,6 +82,7 @@ float baseboard_signalStrength()
 #if Wiring_WiFi
     WiFiSignal sig = WiFi.RSSI();
 #endif
+    return sig;
 }
 
 void shutdown_basehw(Zstate *st)
@@ -69,8 +92,8 @@ void shutdown_basehw(Zstate *st)
   st->onTime += elapsed;
 
   String statusMessage = st->timeIsSynchronized ?
-    st->stateStr + " " + Time.format(clock.rtcNow() + st->gmtOffsetSeconds,"%h%e %R") + " " + st->batCharged + "%"
-    : st->stateStr + "                " + st->batCharge + "%";
+    st->stateStr + " " + Time.format(clocknow() + st->gmtOffsetSeconds,"%h%e %R") + " " + baseboard_batteryIsCharged() + "%"
+    : st->stateStr + "                " + baseboard_batteryLevel() + "%";
   blynk_status_message(statusMessage);
   
   delay(3000);

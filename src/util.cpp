@@ -1,11 +1,4 @@
-/******************************************************/
-//       THIS IS A GENERATED FILE - DO NOT EDIT       //
-/******************************************************/
-
-#include "Particle.h"
-#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/util.ino"
 #include "zstate.h"
-
 
 //make a loop to go through the bit pattern parameter
 //each bit gets a beep
@@ -16,9 +9,6 @@
 //leading to morse code here eventually
 //for now beep("000111000") or (beep"...---...") will produce morse SOS
 //
-void beep(string s);
-void deepSleep(Zstate *st);
-#line 13 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/util.ino"
 #define dot_length 100 //ms sound for a morse dot
 #define dash_length (3*dot_length)
 #define char_space dash_length
@@ -27,7 +17,12 @@ void deepSleep(Zstate *st);
 #define buzzon() digitalWrite(buzzer, HIGH)
 #define buzzoff() digitalWrite(buzzer, LOW)
 
-void beep(string s) {
+void blynk_status_message(String msg)
+{
+  Blynk.virtualWrite(V30, msg);
+}
+
+void beep(String s) {
   for (int i=0; i<len(s); i++) {
     switch (s[i]) {
     '0':

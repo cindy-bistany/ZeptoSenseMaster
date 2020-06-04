@@ -1,7 +1,14 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
+
+#include "Particle.h"
+#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/zstate.ino"
 //emacs     -*- c++ -*-
 
 //Object for accessing persistent storage
 #include <MB85RC256V-FRAM-RK.h>
+#line 5 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/zstate.ino"
 MB85RC256V fram(Wire, 0);
 
 int firstRunValue = 31415; //a random number

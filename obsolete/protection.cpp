@@ -1,6 +1,20 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
+
+#include "Particle.h"
+#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/protection.ino"
 #include "SparkFun_ADXL345ST.h"         // SparkFun ADXL345 Library
 
 //********** ADXL345 COMMUNICATION ***********
+void ADXL_ISR();
+void accel_poweron();
+void accel_check();
+void setup_adxl345();
+void setup_accelerometer();
+void setup_protection();
+void loop_protection();
+#line 4 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/protection.ino"
 ADXL345 adxl = ADXL345();             // USE FOR ACCEL COMMUNICATION in I2C mode
 
 //******************** ISR *********************

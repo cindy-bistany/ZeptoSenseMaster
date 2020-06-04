@@ -1,3 +1,9 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
+
+#include "Particle.h"
+#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/detection.ino"
 // emacs -*- c++ -*-
 //###############
 //Detection is in 2 parts:
@@ -11,6 +17,17 @@
 //###############
 #include <SPS30.h>
 
+void setup_sps30(State st);
+void loop_sps30(State st, Readings rd);
+void loop_pmcounter(State st, Readings rd);
+void setup_spec();
+void loop_spec();
+void setup_iaq(Zstate st);
+void loop_iaq(Zstate st);
+void setup_detection(Zstate st);
+void loop_detection(zstate *st);
+void readings_get(Zstate *st);
+#line 14 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/detection.ino"
 SPS30 sps30;
 
 void setup_sps30(State st)

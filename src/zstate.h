@@ -71,7 +71,6 @@ class Zstate {
   //This I think was the state of the powered-almost-off mode.  But I also this should always be true, except first run.
   bool bInSleepMode; // If TRUE was in a sleep
 
-
   void factory_reset();
   void save();
   void load();

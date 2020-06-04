@@ -89,7 +89,7 @@ void Baseboard::setup_i2c()
 //wake up from power off
 //bring up the baseboard, but be sure all other power is turned off.
 //
-void Baseboard::setup(Zstate *st)
+void Baseboard::setup()
 {
   beep("---");
   
@@ -117,9 +117,6 @@ void Baseboard::setup(Zstate *st)
   setup_i2c(st);
   //setup_clock(st);
 
-  st->load();
-  st->readingCount=0;
-  st->bInSleepMode=false;
 }
 
 //

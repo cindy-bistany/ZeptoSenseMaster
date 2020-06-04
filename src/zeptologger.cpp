@@ -1,23 +1,13 @@
-/******************************************************/
-//       THIS IS A GENERATED FILE - DO NOT EDIT       //
-/******************************************************/
-
-#include "Particle.h"
-#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/zeptologger.ino"
 // Particle.io (Arduino) code for zeptive vape sensor
 // Copyright 2020 zeptive.com
 //
 
+#include "zstate.h"
+#include "baseboard.h"
+
 //ideally:
-bool alertChanged(Zstate *st);
-bool batAlertChanged(Zstate *st);
-bool tamperAlertChanged(Zstate *st);
-void timerSleep(long seconds);
-void setAlarm(int DURATION);
-void initializeAlarm();
-void activateAlarmPowerdown();
-#line 6 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/zeptologger.ino"
 ZState currentState;
+Baseboard board;
 
 setup()
 {
@@ -26,8 +16,12 @@ setup()
   
   currentState.load();		//restore prev or init new state
   currentState.wakeupTime = wakeupTime;	//note the original wake up time.
+  currentState->load();
+  currentState->readingCount=0;
+  currentState->bInSleepMode=false;
   
-  setup_basehw(currentState);
+  board.setup();
+
   setup_clock(&currentState);
   setup_protection(&currentState);
   setup_detection(&currentState);

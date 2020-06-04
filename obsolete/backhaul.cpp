@@ -1,5 +1,15 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
+
+#include "Particle.h"
+#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/backhaul.ino"
 
 // Adding explicit connect routine that has to work before the rest of the code runs
+void connect();
+void connectWithoutWaiting();
+bool connected();
+#line 3 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/backhaul.ino"
 void connect()
 {
   //###### CELLULAR ######

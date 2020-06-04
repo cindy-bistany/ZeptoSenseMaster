@@ -1,4 +1,14 @@
+/******************************************************/
+//       THIS IS A GENERATED FILE - DO NOT EDIT       //
+/******************************************************/
 
+#include "Particle.h"
+#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/i2c.ino"
+
+bool checkI2CDevices(String i2cNames[], byte i2cAddr[], size_t i2cLength, bool i2cExists[]);
+void printI2C(int inx);
+void scanI2C();
+#line 2 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/i2c.ino"
 String i2cNames[] = {
     "RTC",
     "Exp",

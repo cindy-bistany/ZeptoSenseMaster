@@ -1,14 +1,7 @@
-/******************************************************/
-//       THIS IS A GENERATED FILE - DO NOT EDIT       //
-/******************************************************/
-
-#include "Particle.h"
-#line 1 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/auth.ino"
 #include "zstate.h"
 
 // Install Information Set to 1 to configure the correct particle board
 //#define NM01
-#line 5 "/home/white3/Documents/zeptive/zeptive-052020-v01/ZeptoSenseMaster/src/auth.ino"
 #define NM02 0
 #define NM03 0
 #define NM04 0

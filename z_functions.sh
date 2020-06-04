@@ -50,13 +50,11 @@ function z_backup() {
     fi
 
     (cd $ZDIR
-     local answer
-     echo -n "Enter the commit message: "
-     read answer
+     local commitMsg="Backup `date`"
      z_make_clean
      git add --verbose .
      #git diff --cached
-     git commit --verbose -a -m "${answer}"
+     git commit --verbose -a -m "${commitMsg}"
      git remote remove origin
      git remote --verbose add origin "${GITREPO}"
      git push --verbose origin master
