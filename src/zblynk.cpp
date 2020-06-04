@@ -1,7 +1,7 @@
-#include "blynk.h"
-
 // emacs -*- c++ -*-
 //zblynk - glue code between blynk and zeptive
+
+#include "blynk.h"
 
 void blynk_status_message(String msg)
 {

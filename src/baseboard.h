@@ -7,17 +7,23 @@
 
 class Baseboard {
  public:
-  void setup(Zstate *st);
-  void shutdown(Zstate *st);
+  void setup();
+  void shutdown();
 
   void powerOnOff(int which, bool onoff);
+  int powerIsOnOff();
   bool batteryIsCharged();
   float batteryLevel();
   float signalStrength();
 
+  void buzzer(bool onoff);
+
  private:
-  void setup_expander(Zstate *st);
-  void setup_i2c(Zstate *st);
-  void setup_i2c(Zstate *st);
+  void setup_expander();
+  void setup_i2c();
+  IoTNodePower boardPower;
+  bool v5IsOn;
+  bool v3IsOn;
+};
 
 #endif

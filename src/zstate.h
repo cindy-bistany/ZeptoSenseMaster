@@ -1,6 +1,8 @@
 #ifndef ZSTATE_H
 #define ZSTATE_H
 
+#include <stdint.h>
+
 #define DEBUG 1
 
 #ifdef DEBUG
@@ -12,19 +14,20 @@
 #endif
 
 
-#include <MB85RC256V-FRAM-RK.h>
-
 #define BUILD_RANDOM_NUMBER 31415; //a random number
 
 
 //#####
 // Zeptive config variables
-// the original 
 //#####
+class Zstate_persistent {
+};
+
 class Zstate {
  public:
   int build_random_number;  //to detect the very first power up after flashing
-
+  bool terminalDebug;
+  
   unsigned long wakeuptime, onTime, backhaulTime;
 
   int deviceTimeZone;	//0=America/New_York, 1=America/Chicago, 2=America/Phoenix, 3=America/Los_Angeles
@@ -34,7 +37,7 @@ class Zstate {
   uint16_t portBlynk;	//probably should be hived off into blynk
   int portBuzzer;	//documented as D7, but what is D7?, maybe hive off into baseboard code
 
-  String stateStr;
+  char stateStr[64];
   
   int readingCount;	//some type of averaging I think
   int numberOfReadings; //something to do with tracking the readings while looping
@@ -76,18 +79,8 @@ class Zstate {
   void load();
 };
 
-//#####
-// Zeptive readings from sensors
-//#####
-class Zreadings {
-  // Flag to keep track of accel interrupts
-  bool accelInterrupt;
-  float mass_concen[4];
-  float num_concen[5];
+/*
   bool powerOn, appConnected, sensorValid, currentAlert,
-    terminalDebug, batCurrentAlert, tamperCurrentAlert;
-
-  void clear();
-};
-
+    batCurrentAlert, tamperCurrentAlert;
+*/
 #endif

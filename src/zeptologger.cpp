@@ -14,13 +14,12 @@ setup()
   //just waking up from power off
   unsigned long wakeupTime = millis();	//note what time we woke up
   
+  board.setup();
+
   currentState.load();		//restore prev or init new state
   currentState.wakeupTime = wakeupTime;	//note the original wake up time.
-  currentState->load();
-  currentState->readingCount=0;
-  currentState->bInSleepMode=false;
-  
-  board.setup();
+  currentState.readingCount = 0;
+  currentState.bInSleepMode = false;
 
   setup_clock(&currentState);
   setup_protection(&currentState);
@@ -94,9 +93,6 @@ int interruptPin = A0;                 // Setup pin A0 for Boron
 // SYSTEM_MODE(SEMI_AUTOMATIC);
 // SYSTEM_THREAD(ENABLED);
 
-// EXAMPLE - defining and using a LED status
-LEDStatus blinkYellow(RGB_COLOR_YELLOW, LED_PATTERN_BLINK, LED_SPEED_NORMAL, LED_PRIORITY_IMPORTANT);
-LEDStatus blinkRed(RGB_COLOR_RED, LED_PATTERN_BLINK, LED_SPEED_NORMAL, LED_PRIORITY_IMPORTANT);
 
 
 char *pm[5] = {"PM0.5", "PM1.0", "PM2.5", "PM4.0", "PM10"};

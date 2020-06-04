@@ -11,9 +11,9 @@
 //###############
 #include <SPS30.h>
 
-SPS30 sps30;
+SPS30 pmcounter;
 
-void setup_sps30(State st)
+void Detector::setup_sps30(State st)
 {
   // SPS30 checks
   bool sps30OK = false;
@@ -44,14 +44,7 @@ void setup_sps30(State st)
   }
 }
 
-void loop_sps30(State st, Readings rd)
-{
-}
-
-void loop_pmcounter(State st, Readings rd)
-{
-  loop_sps30(st, rd);
-}
+void Detector::setup_pmcounter() { setup_sps30(); }
 
 
 //###############
@@ -59,22 +52,21 @@ void loop_pmcounter(State st, Readings rd)
 //###############
 #include "ULP.h"
 
-IAQ sensor1(A2, A4, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RESP, O3, and SPEC (custom)
+IAQ iaqsensor(A2, A4, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RESP, O3, and SPEC (custom)
 //IAQ sensor1(C1, T1, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RESP, O3, and SPEC (custom)
 //O3 sensor2(C2, T2, Sf2);  //Example O3
 //H2S sensor3(C3, T3, Sf3); //Example H2S
 
 // These constants won't change.  They're used to give names to the pins used and to the sensitivity factors of the sensors:
-
 //const int C1 = A2;
 //const int T1 = A4;
 
 const float Sf1 = 4.05; //nA/ppm replace this value with your own sensitivity
 
 
-void setup_spec()
+void setup_iaq()
 {
-  Sensor.begin();
+  iaqsensor.begin();
 }
 
 void loop_spec()
@@ -92,22 +84,11 @@ void loop_spec()
 
 }
 
-void setup_iaq(Zstate st) { setup_spec(st); }
-
-void loop_iaq(Zstate st) { loop_spec(st); }
-
-void setup_detection(Zstate st)
+void Detector::setup(Zstate st)
 {
   setup_iaq(st);
   setup_pmcounter();
 }
-
-void loop_detection(zstate *st)
-{
-  loop_iaq(st);
-  loop_pmcounter(st);
-}
-
 
 void readings_get(Zstate *st)
 {
@@ -374,4 +355,48 @@ void readings_get(Zstate *st)
   readingCount++;
 }
 
+float Detector::read()
+{
+  const unsigned long timeout = 8100;
+  unsigned long startTime = millis();
+  
+  while ((millis() - startTime) < timeout)
+    if (pmcounter.dataAvailable) {
+      pmcounter.getMass(mass_concentration);
+      pmcounter.getNum(numeric_concentration);
+      break;
+    }
+    else {
+      tampered = accelerometer.tampered();
+      delay(100);
+    }
+  vgas = iaqsensor.getVgas(1);
+  temperatureF = iaqsensor.getTemp(1, "F");
+  temperatureC = iaqsensor.getTemp(1);
+  gas_conc = iaqsensor.getConc(1, temperatureC);
+  
+}
 
+float Detector::pm1()  { return mass_concentration[0]; }
+float Detector::pm25() { return mass_concentration[1]; }
+float Detector::pm4()  { return mass_concentration[2]; }
+float Detector::pm10() { return mass_concentration[3]; }
+
+
+float Detector::numeric_concentration(int i)
+{
+  return numeric_contration[i];
+}
+
+float Detector::vgas()
+{
+  return vgas;
+}
+
+float Detector::gas_concentration()
+{
+  return gas_conc;
+}
+
+
+  

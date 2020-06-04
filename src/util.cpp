@@ -17,9 +17,31 @@
 #define buzzon() digitalWrite(buzzer, HIGH)
 #define buzzoff() digitalWrite(buzzer, LOW)
 
+// EXAMPLE - defining and using a LED status
+LEDStatus blinkYellow(RGB_COLOR_YELLOW, LED_PATTERN_BLINK, LED_SPEED_NORMAL, LED_PRIORITY_IMPORTANT);
+LEDStatus blinkRed(RGB_COLOR_RED, LED_PATTERN_BLINK, LED_SPEED_NORMAL, LED_PRIORITY_IMPORTANT);
+
+void blinkpanic()
+{
+    blinkRed.setActive(true);
+    delay(3000);
+    blinkRed.setActive(false);
+    blinkYellow.setActive(true);
+    delay(3000);
+    blinkYellow.setActive(false);
+    blinkRed.setActive(true);
+    delay(3000);
+}
+
+
 void blynk_status_message(String msg)
 {
   Blynk.virtualWrite(V30, msg);
+}
+
+void blynk_debug_message(String msg)
+{
+  Blynk.virtualWrite(V21, msg);
 }
 
 void beep(String s) {

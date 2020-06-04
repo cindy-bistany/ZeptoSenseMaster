@@ -7,7 +7,7 @@
 #include "clock.h"
 #include "baseboard.h"
 
-IoTNodePower power;
+//IoTNodePower boardPower;
 
 ///////////////////////////////////////////////////////////
 // CHECK TO MAKE SURE THE EXPANDER CAN BE SEEN
@@ -15,17 +15,18 @@ IoTNodePower power;
 // the Write.endTransmission to see if
 // a device did acknowledge to the address.
 //
-#define MCP23017_ADDRESS = 0x20;
-
+/*
 Baseboard::Baseboard()
 {
 }
+*/
 
 void Baseboard::setup_expander()
 {
-  byte expandererror, expanderaddress;
+  const byte MCP23017_ADDRESS = 0x20;
+  byte expanderaddress = MCP23017_ADDRESS;
+  byte expandererror;
 
-  expanderaddress = MCP23017_ADDRESS;
   Wire.beginTransmission(expanderaddress);
   expandererror = Wire.endTransmission();
 
@@ -40,16 +41,118 @@ void Baseboard::setup_expander()
   if (!expandererror == 0) {
     debug("Unable to read Expander - resetting in 9 seconds\n");
     Particle.publish("Error","Unable to read Expander - resetting in 9 seconds",PRIVATE);
-    blinkRed.setActive(true);
-    delay(3000);
-    blinkRed.setActive(false);
-    blinkYellow.setActive(true);
-    delay(3000);
-    blinkYellow.setActive(false);
-    blinkRed.setActive(true);
-    delay(3000);
+    blinkpanic();
     System.reset();
   }
+}
+////////////////
+//  I2C functions
+//////////////
+
+String i2cNames[] = {
+    "RTC",
+    "Exp",
+    "RTC EEPROM",
+    "ADC",
+    "FRAM",
+    "ADXL345",
+    "SPS30"
+};
+
+byte i2cAddr[]= {
+    0x6F, //111
+    0x20, //32
+    0x57, //87
+    0x4D, //77
+    0x50, //80
+    0x53, //83
+    0x69 //105
+    
+};
+
+// number of elements in `array`
+static const size_t i2cLength = sizeof(i2cAddr) / sizeof(i2cAddr[0]);
+
+bool i2cExists[]=
+{
+  false,
+  false,
+  false,
+  false,
+  false,
+  false,
+  false
+};
+
+// check i2c devices with i2c names at i2c address of length i2c length returned in i2cExists
+bool checkI2CDevices(String i2cNames[], byte i2cAddr[], size_t i2cLength, bool i2cExists[])
+{
+  byte error, address;
+  bool result = true;
+  for (size_t i=0; i<i2cLength; ++i)
+  {
+    // The i2c_scanner uses the return value of
+    // the Write.endTransmisstion to see if
+    // a device did acknowledge to the address.
+    address = i2cAddr[i];
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+
+    if (!error==0)
+    {
+      Wire.reset();
+      Wire.beginTransmission(address);
+      error = Wire.endTransmission();
+    }
+
+    String msg = "Device "+ i2cNames[i] + " address:0x" + String(address, HEX);
+    result = i2cExists[i] = (error == 0);
+    msg += result ? " FOUND\n" : " NOT FOUND\n";
+    debug(msg);
+  }
+  return result;
+}
+
+
+void printI2C(int inx)
+{
+    for (int i=0; i<i2cLength; i++)
+      if (i2cAddr[i] == inx)
+	debug(String("Device "+i2cNames[i]+ " at"+" address:0x"+String(i2cAddr[i], HEX) + "\n"));
+}
+
+void scanI2C()
+{
+  byte error, address;
+  int nDevices;
+ 
+  debug("Scanning...\n");
+  nDevices = 0;
+  for(address = 1; address < 127; address++ )
+  {
+    // The i2c_scanner uses the return value of
+    // the Write.endTransmisstion to see if
+    // a device did acknowledge to the address.
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
+ 
+    if (error == 0)
+    {
+      printI2C(address);
+      nDevices++;
+    }
+    else if (error==4)
+    {
+      debug("Unknown error at address 0x");
+      if (address<16)
+        debug("0");
+      debug(String(address,HEX) + "\n");
+    }    
+  }
+  if (nDevices == 0)
+    debug("No I2C devices found\n");
+  else
+    debug("done\n");
 }
 
 void Baseboard::setup_i2c()
@@ -89,7 +192,8 @@ void Baseboard::setup_i2c()
 //wake up from power off
 //bring up the baseboard, but be sure all other power is turned off.
 //
-void Baseboard::setup(Zstate *st)
+#define BUZZER D7
+void Baseboard::setup()
 {
   beep("---");
   
@@ -101,25 +205,23 @@ void Baseboard::setup(Zstate *st)
   Serial1.begin(115200);  // Used to monitor debug without USB connection
   delay(100);
   
-  pinMode(st->portBuzzer, OUTPUT);
-  digitalWrite(st->portBuzzer, LOW);
+  pinMode(BUZZER, OUTPUT);
+  digitalWrite(BUZZER, LOW);
   
   Wire.begin();
   delay(100);
   debug("Start Setup section after a sleep\n");
 
-  setup_expander(st);
+  setup_expander();
   
-  power.begin();
-  power.setPowerON(EXT3V3, false);
-  power.setPowerON(EXT5V, false);
-
-  setup_i2c(st);
+  boardPower.begin();
+  boardPower.setPowerON(EXT3V3, false);
+  boardPower.setPowerON(EXT5V, false);
+  v3IsOn = v5IsOn = false;
+  
+  setup_i2c();
   //setup_clock(st);
 
-  st->load();
-  st->readingCount=0;
-  st->bInSleepMode=false;
 }
 
 //
@@ -128,6 +230,7 @@ void Baseboard::setup(Zstate *st)
 bool Baseboard::batteryIsCharged()
 {
   beep("...---...");
+  return false;
 }
 
 FuelGauge fuel;
@@ -162,22 +265,27 @@ float Baseboard::signalStrength()
     return sig;
 }
 
-void Baseboard::shutdown(Zstate *st)
+void Baseboard::buzzer(bool onoff)
 {
-  st->stateStr = "STBY";
+  digitalWrite(BUZZER, onoff);
+}
+
+void Baseboard::shutdown()
+{
+  /*  st->stateStr = "STBY";
   unsigned long elapsed = millis() - st->wakeuptime;
   st->onTime += elapsed;
-
-  String statusMessage = st->timeIsSynchronized ?
-    st->stateStr + " " + Time.format(clocknow() + st->gmtOffsetSeconds,"%h%e %R") + " " + baseboard_batteryIsCharged() + "%"
-    : st->stateStr + "                " + baseboard_batteryLevel() + "%";
+  */
+  
+  /*  String statusMessage = st->timeIsSynchronized ?
+    st->stateStr + " " + Time.format(clocknow() + st->gmtOffsetSeconds,"%h%e %R") + " " + batteryIsCharged() + "%"
+    : st->stateStr + "                " + batteryLevel() + "%";
   blynk_status_message(statusMessage);
+  */
   
   delay(3000);
-  power.setPowerON(EXT3V3,false);
-  power.setPowerON(EXT5V,false);
-  // Release I2C bus for expander
-  if (!Wire.isEnabled()) Wire.end();
+  powerOnOff(0, false);
+  if (!Wire.isEnabled()) Wire.end();  // Release I2C bus for expander
 
   debug("Going to sleep\n");
   
@@ -188,20 +296,39 @@ void Baseboard::shutdown(Zstate *st)
   #if Wiring_WiFi
   WiFi.off();
   // For wifi FORCE DEEPSLEEP no stanby
+  /*
   st->bSleepModeStandby=false;
   st->bInSleepMode=false;
+  */
   #endif  
 }
 
 void Baseboard::powerOnOff(int which, bool onoff)
 {
-  if (which == 3) power.setPowerOn(EXT3V3, onoff);
-  else if (which == 5) power.setPowerOn(EXT5V, onoff);
-  else {
-    power.setPowerON(EXT3V3, onoff);
-    power.setPowerON(EXT5V, onoff);
+  switch (which) {
+  case 3:
+    boardPower.setPowerON(EXT3V3, onoff);
+    v3IsOn = onoff;
+    break;
+  case 5:
+    boardPower.setPowerON(EXT5V, onoff);
+    v5IsOn = onoff;
+    break;
+  default:
+    boardPower.setPowerON(EXT3V3, onoff);
+    boardPower.setPowerON(EXT5V, onoff);
+    v3IsOn = v5IsOn = onoff;
   }
 }
+
+int Baseboard::powerIsOnOff()
+{
+  int ret = 0;
+  if (v3IsOn) ret |= 1;
+  if (v5IsOn) ret |= 2;
+  return ret;
+}
+
 
 
 
