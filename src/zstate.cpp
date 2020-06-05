@@ -1,12 +1,15 @@
 //emacs     -*- c++ -*-
 
+#include <Wire.h>
+
 #include "zbuild.h"
+#include "zstate.h"
 
 //Object for accessing persistent storage
 #include <MB85RC256V-FRAM-RK.h>
 MB85RC256V fram(Wire, 0);
 
-Zstate::Zstate() {
+Zstate::setup() {
   factory_reset();
 }
 

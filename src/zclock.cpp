@@ -1,82 +1,94 @@
 // emacs -*- c++ -*-
-#include "zstate.h"
-#include "clock.h"
-#include "MCP7941x.h"
+#include <Particle.h>
+#include <cstdlib>
+
+#include "util.h"
+#include "zclock.h"
 
 // Create new instance of RTC class:
 // Use to hard power cycle the device to reset I2C
+#include "MCP7941x.h"
 MCP7941x rtc = MCP7941x();
+
+Zclock zclock;
+
+///
+///callback for Particle clock sync event
+///
+void gmtOffsetHandler(const char *event, const char *data) {
+  zclock.setGMTOffset(atoi(data));
+}
+///
 
 void Zclock::setup()
 {  
   // Sync time if needed
-  if (Time.isValid() && !timeSynced) {
-    rtc.setUnixTime(Time.now());
-    if (abs(Time.now() - rtc.rtcNow()) < 10) {
-      timeSynced=true;
+  if (Time.isValid() && !timeIsSynchronized) {
+    unsigned long now = Time.now();
+    rtc.setUnixTime(now);
+    unsigned long rtcnow = rtc.rtcNow();
+    unsigned long diff = rtcnow - now;
+    if (diff < 0) diff = -diff;
+    if (diff < 10) {
+      timeIsSynchronized = true;
       debug("Time is synced to the cloud\n"); 
     }
   }
+  Particle.subscribe("hook-response/gmtOffset", gmtOffsetHandler, MY_DEVICES);
+  if (Particle.connected() && !gmtOffsetValid) 
+    Particle.publish("gmtOffset", zclock.timeZoneName().c_str(), PRIVATE);
 }
 
-uint32_t Zclock::now() { return rtc.rtcNow(); }
+uint32_t Zclock::now() {
+  if (Particle.connected() && !gmtOffsetValid) 
+    Particle.publish("gmtOffset", zclock.timeZoneName().c_str(), PRIVATE);
+  return rtc.rtcNow();
+}
 
 void Zclock::on()
 {
+  ///////////WWWWWWWWWWWWWWWWWWWWWWhat is this for
   long int clockTime = rtc.rtcNow();
-  debug("Before\n");
-  debug(clockTime);
-  debug(": \n");
-  debug(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)) + "\n");
-  if (clockTime<946684800||clockTime>4102444799)
-    {
+  if (clockTime<946684800||clockTime>4102444799) {
       // 2019-01-01T00:00:00+00:00 in ISO 8601
       // Actual time is not important for rtc reset but needs to be a positive unix time
       rtc.setUnixTime(1262304000);
-      long int clockTime = rtc.rtcNow();
-      debug("After\n");
-      debug(clockTime);
-      debug(": \n");
-      debug(String(Time.format(clockTime, TIME_FORMAT_ISO8601_FULL)) + "\n");
     }
-  timeSynced=false;
+  timeIsSynchronized = false;
 }
 
-void gmtOffsetHandler(const char *event, const char *data) {
-  // Handle the integration response
-  gmtOffsetSeconds=atoi(data);
-  gmtOffsetValid = true;
-  debug("GMT seconds offset is: ");
-  debug(gmtOffsetSeconds + "\n");
-}
+void Zclock::setTimeZone(int tz) { deviceTimeZone = tz; }
+int Zclock::getTimeZone() { return deviceTimeZone; }
 
-void publishGMTOffsetRequest()
+void Zclock::setGMTOffset(long offset)
 {
-  // Send to https://timezonedb.com webhook for gmtOffset
-  debug("publishGMTOffsetRequest Device Zone value is: ");
-  debug(state.deviceZone + "\n");
-  switch (state.deviceZone)
-  {
-    case 0:
-      // America/New_York
-      Particle.publish("gmtOffset", "America/New_York", PRIVATE);
-      break;
-    case 1:
-      // America/Chicago
-      Particle.publish("gmtOffset", "America/Chicago", PRIVATE);
-      break;
-    case 2:
-      // America/Phoenix
-      Particle.publish("gmtOffset", "America/Phoenix", PRIVATE);
-      break;
-    case 3:
-      // America/Los_Angeles
-      Particle.publish("gmtOffset", "America/Los_Angeles", PRIVATE);
-      break;
-    default:
-      // America/New_York
-      Particle.publish("gmtOffset", "America/New_York", PRIVATE);  
-  }
+  gmtOffsetSeconds = offset;
+  gmtOffsetValid = true;
 }
+
+string Zclock::timeZoneName()
+{
+  string zone;
+  switch (zclock.getTimeZone()) {
+  case 0:
+    zone = "America/New_York";
+    break;
+  case 1:
+    zone = "America/Chicago";
+    break;
+  case 2:
+    zone = "America/Phoenix";
+    break;
+  case 3:
+    zone = "America/Los_Angeles";
+    break;
+  default:
+    zone = "America/New_York";
+    break;
+  }
+  return zone;
+}
+
+
 
 

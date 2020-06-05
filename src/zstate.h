@@ -2,6 +2,7 @@
 #define ZSTATE_H
 
 #include <stdint.h>
+#include <string>
 
 #define DEBUG 1
 
@@ -14,18 +15,12 @@
 #endif
 
 
-#define BUILD_RANDOM_NUMBER 31415; //a random number
-
-
 //#####
 // Zeptive config variables
 //#####
 class Zstate_persistent {
-};
-
-class Zstate {
- public:
-  int build_random_number;  //to detect the very first power up after flashing
+  unsigned long build_number;	//serialized build number
+  int build_random_number;	//to detect the very first power up after flashing
   bool terminalDebug;
   
   unsigned long wakeuptime, onTime, backhaulTime;
@@ -70,7 +65,13 @@ class Zstate {
 
   //This I think was the state of the powered-almost-off mode.  But I also this should always be true, except first run.
   bool bInSleepMode; // If TRUE was in a sleep
+};
 
+class Zstate {
+ public:
+  Zstate_persistent p;
+
+  void setup();
   void factory_reset();
   void save();
   void load();

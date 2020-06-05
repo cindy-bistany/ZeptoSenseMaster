@@ -26,18 +26,22 @@ function z_() { . ${ZDIR}/z_functions.sh; }	#reload this file
 function z_rm~() { rm ${ZDIR}/*~ ${ZDIR}/src/*~; } #Delete emacs backup files
 
 
-function z_buildnum() {
-    rm -f ${ZDIR}/.zkill
-    while true; do
-	if test -e ${ZDIR}/.zkill; then return; fi
-	echo "// This file generated autmatically - do not edit" > src/zbuild.h
-	echo "//" >>src/zbuild.h
+function z_buildnum_generator() {
+    (
+	cd ${ZDIR}
+	if test -f .zkill; then sleep 15; fi #wait for other processes to notice and exit
+	rm -f .zkill
+	while true; do
+	    if test -f .zkill; then return; fi
+	    echo "// This file generated automatically - do not edit" > src/zbuild.h
+	    echo "//" >> src/zbuild.h
 	
-	echo "const char BUILD_DATE[] = \"`date`\";" >> src/zbuild.h
-	echo "const unsigned long BUILD_NUMBER = `date +%s`;" >> src/zbuild.h
-	echo "const unsigned int BUILD_RANDOM_NUMBER = ${RANDOM};" >> src/zbuild.h
-	sleep 10;
-    done
+	    echo "const char BUILD_DATE[] = \"`date`\";" >> src/zbuild.h
+	    echo "const unsigned long BUILD_NUMBER = `date +%s`;" >> src/zbuild.h
+	    echo "const unsigned int BUILD_RANDOM_NUMBER = ${RANDOM};" >> src/zbuild.h
+	    sleep 10;
+	done
+    ) &
 }
 
 function z_kill() { touch ${ZDIR}/.zkill; }

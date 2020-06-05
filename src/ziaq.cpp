@@ -16,13 +16,13 @@ IAQ iaqsensor(A2, A4, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RE
 //const int C1 = A2;
 //const int T1 = A4;
 
-void Ziaq::setup() { iaqsensor.begin(); }
-void Ziaq::tempF() { iaqsensor.getTemp(1, "F"); }
-void Ziaq::tempC() { iaqsensor.getTemp(1, "C"); }
-void Ziaq::vgas()  { iaqsensor.getVgas(1); }
+void Ziaq::setup() { }
+int Ziaq::tempF()  { return iaqsensor.getTemp(1, "F"); }
+int Ziaq::tempC()  { return iaqsensor.getTemp(1, "C"); }
+float Ziaq::vgas() { return iaqsensor.getVgas(1); }
 
 
-void Ziaq::concentration()
+float Ziaq::concentration()
 {
-  iaqsensor.getConc(1, iaqsensor.getTemp(1, "C"));
+  return iaqsensor.getConc(1, iaqsensor.getTemp(1, "C"));
 }

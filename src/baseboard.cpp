@@ -4,7 +4,7 @@
 
 #include "zstate.h"
 #include "util.h"
-#include "clock.h"
+#include "zclock.h"
 #include "baseboard.h"
 
 //IoTNodePower boardPower;

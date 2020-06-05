@@ -2,13 +2,16 @@
 #define IAQ_H
 
 class Ziaq {
-
+ public:
   void setup();
+  float concentration();
+
+ private:
   int tempF();
   int tempC();
   float vgas();
-  float concentration();
-  
-}
+};
+
+extern Ziaq ziaq;
 
 #endif
