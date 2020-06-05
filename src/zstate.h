@@ -30,9 +30,6 @@ class Zstate {
   
   unsigned long wakeuptime, onTime, backhaulTime;
 
-  int deviceTimeZone;	//0=America/New_York, 1=America/Chicago, 2=America/Phoenix, 3=America/Los_Angeles
-  int gmtOffsetSeconds;
-  bool timeIsSynchronized;	//to what?
 
   uint16_t portBlynk;	//probably should be hived off into blynk
   int portBuzzer;	//documented as D7, but what is D7?, maybe hive off into baseboard code

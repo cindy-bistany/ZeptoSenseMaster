@@ -7,30 +7,21 @@
 // Use to hard power cycle the device to reset I2C
 MCP7941x rtc = MCP7941x();
 
-void setup_clock(Zstate *st)
+void Zclock::setup()
 {  
   // Sync time if needed
-  if (Time.isValid()&&!timeSynced)
-  {
+  if (Time.isValid() && !timeSynced) {
     rtc.setUnixTime(Time.now());
-    if (abs(Time.now()-rtc.rtcNow())<10)
-    {
+    if (abs(Time.now() - rtc.rtcNow()) < 10) {
       timeSynced=true;
       debug("Time is synced to the cloud\n"); 
-      /*String TimeMsg;
-      TimeMsg="Time "+Time.format(rtc.rtcNow()+gmtOffsetSeconds,"%h%e %R");
-      debug(TimeMsg); + "\n"*/
     }
   }
 }
 
-void loop_clock()
-{
-}
+uint32_t Zclock::now() { return rtc.rtcNow(); }
 
-uint32_t clocknow() { return rtc.rtcNow(); }
-
-void clockon()
+void Zclock::on()
 {
   long int clockTime = rtc.rtcNow();
   debug("Before\n");

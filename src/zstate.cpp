@@ -1,10 +1,10 @@
 //emacs     -*- c++ -*-
 
+#include "zbuild.h"
+
 //Object for accessing persistent storage
 #include <MB85RC256V-FRAM-RK.h>
 MB85RC256V fram(Wire, 0);
-
-int firstRunValue = 31415; //a random number
 
 Zstate::Zstate() {
   factory_reset();

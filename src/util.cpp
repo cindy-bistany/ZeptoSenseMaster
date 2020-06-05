@@ -34,16 +34,6 @@ void blinkpanic()
 }
 
 
-void blynk_status_message(String msg)
-{
-  Blynk.virtualWrite(V30, msg);
-}
-
-void blynk_debug_message(String msg)
-{
-  Blynk.virtualWrite(V21, msg);
-}
-
 void beep(String s) {
   for (int i=0; i<len(s); i++) {
     switch (s[i]) {

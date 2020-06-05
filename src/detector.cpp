@@ -5,84 +5,18 @@
 //	2) indoor air quality sensor (IAQ)
 //###############
 
+#include "detector.h"
+#include "pmcounter.h"
+#include "iaq.h"
+#include "tamper.h"
 
-//###############
-//PM counter code
-//###############
-#include <SPS30.h>
+Detector detector;
 
-SPS30 pmcounter;
-
-void Detector::setup_sps30(State st)
+void Detector::setup()
 {
-  // SPS30 checks
-  bool sps30OK = false;
-  uint32_t sps30start = millis();
-  
-  while (!sps30OK && millis()-sps30start<8000) {
-    if (!sps30.begin()) {
-      debug("Unable to read SPS30 - trying again\n");
-      delay(1000);
-    }
-    else {
-      debug("Read SPS30\n");
-      sps30OK = true;
-    }
-  }
-    
-  if (!sps30OK) {
-    debug("Unable to read SPS30 - resetting device\n");
-    delay(1000);
-    System.reset();    
-  }
-
-  // Delay 8 seconds or until the SPS30 is ready
-  unsigned long waitForSPS30 = millis();
-  while ((!sps30.dataAvailable()) && (millis()-waitForSPS30<8100)) {
-    delay(100);
-    check_accel();
-  }
 }
 
-void Detector::setup_pmcounter() { setup_sps30(); }
 
-
-//###############
-//SPEC Sensors code
-//###############
-#include "ULP.h"
-
-IAQ iaqsensor(A2, A4, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RESP, O3, and SPEC (custom)
-//IAQ sensor1(C1, T1, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RESP, O3, and SPEC (custom)
-//O3 sensor2(C2, T2, Sf2);  //Example O3
-//H2S sensor3(C3, T3, Sf3); //Example H2S
-
-// These constants won't change.  They're used to give names to the pins used and to the sensitivity factors of the sensors:
-//const int C1 = A2;
-//const int T1 = A4;
-
-const float Sf1 = 4.05; //nA/ppm replace this value with your own sensitivity
-
-
-void setup_iaq()
-{
-  iaqsensor.begin();
-}
-
-void loop_spec()
-{
-  float conc1, temp1;
-  float TZero;
-  float Vzero1;
-  
-  //  Include these if using different boards with different voltages
-  //float ULP::_Vcc = 5.0;  //analogRead Reference Voltage
-  //float ULP::_Vsup =3.3;  //voltage supplied to V+ of ULP, ideally 3.3 Volts 
-  
-  String field1,field2,field3,field4,field5,field6,field7,field8;
-  String datastring;
-
-}
 
 void Detector::setup(Zstate st)
 {

@@ -9,7 +9,5 @@ void blinkpanic();
 
 void deepSleep(Zstate *st);
 
-void blynk_status_message(String msg);
-void blynk_debug_message(String msg);
 
 #endif

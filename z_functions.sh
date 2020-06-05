@@ -26,6 +26,22 @@ function z_() { . ${ZDIR}/z_functions.sh; }	#reload this file
 function z_rm~() { rm ${ZDIR}/*~ ${ZDIR}/src/*~; } #Delete emacs backup files
 
 
+function z_buildnum() {
+    rm -f ${ZDIR}/.zkill
+    while true; do
+	if test -e ${ZDIR}/.zkill; then return; fi
+	echo "// This file generated autmatically - do not edit" > src/zbuild.h
+	echo "//" >>src/zbuild.h
+	
+	echo "const char BUILD_DATE[] = \"`date`\";" >> src/zbuild.h
+	echo "const unsigned long BUILD_NUMBER = `date +%s`;" >> src/zbuild.h
+	echo "const unsigned int BUILD_RANDOM_NUMBER = ${RANDOM};" >> src/zbuild.h
+	sleep 10;
+    done
+}
+
+function z_kill() { touch ${ZDIR}/.zkill; }
+ 
 #
 # Clean up to avoid storing useless artifacts
 # Need to do this way due to Particle.io make file requiring huge context

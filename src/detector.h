@@ -7,7 +7,9 @@ class Detector {
   void clear();
   void read();
 
-  bool tampered();
+  bool tamperIsOn();
+  void tamperOff();
+  
   float pm1();
   float pm25();
   float pm4();
@@ -15,7 +17,8 @@ class Detector {
   float mass_concentration();
   float numeric_concentration();
   float gas_concentration();
-  float detector_temp();
+  float tempF();
+  float tempC();
 
  private:
   bool tampered;
@@ -27,5 +30,6 @@ class Detector {
   float pmnum_concentration[5];
 };
 
+extern Detector detector;
 
 #endif
