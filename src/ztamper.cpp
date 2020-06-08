@@ -9,13 +9,15 @@
 //******************** ISR *********************
 // Look for Interrupts and Triggered Action    
 // Need to keep this short and must not include I2C etc.
-#define ADXL_interruptPin = A0;
-ADXL345 adxl = ADXL345();             // USE FOR ACCEL COMMUNICATION in I2C mode
+#define ADXL_INTERRUPT_PIN A0		//not sure where these magic A0 symbols come from, can't const it
+ADXL345 adxl = ADXL345();		// USE FOR ACCEL COMMUNICATION in I2C mode
 static bool adxlInterruptTriggered = false;
-void ADXL_ISR() { adxlInterruptTriggered = true; }	//this gets connected in setup_adxl()
+//
+//this ISR gets connected in setup_adxl()
+void ADXL_ISR() { adxlInterruptTriggered = true; }	//just set a flag
 //**********************************************
 
-void Ztamper.setup() {
+void Ztamper::setup() {
   setup_adxl345();
   reset();
 }
@@ -52,36 +54,9 @@ bool Ztamper::isHigh()		{ return  tamperInterruptTriggered &&  tamperInterruptTr
 bool Ztamper::isFalling()	{ return !tamperInterruptTriggered &&  tamperInterruptTriggered_prev; }
 bool Ztamper::isLow()		{ return !tamperInterruptTriggered && !tamperInterruptTriggered_prev; }
 
-void Ztamper::loop_process_adxlinterrupt()
-{
-  tamperInterruptTriggered_prev = tamperInterruptTriggered;
-  tamperInterruptTriggered = false;	//let's see if any possible adxl int is really a tamper int
-  
-  if (adxlInterruptTriggered) {
-    adxl.InactivityINT(0);	// Turn off Interrupts for Activity(1 == ON, 0 == OFF)
-    adxl.ActivityINT(0);
-    // getInterruptSource clears all triggered actions after returning value
-    // Do not call again until you need to recheck for triggered actions
-    byte interrupts = adxl.getInterruptSource();	//must be a bit mask I guess
-
-    // Inactivity
-    if (adxl.triggered(interrupts, ADXL345_INACTIVITY)) {
-      //seems like a good place here for a heartbeat message back to HQ
-      //
-    }
-    
-    // Activity
-    tamperInterruptTriggered = adxl.triggered(interrupts, ADXL345_ACTIVITY);
-    
-    adxl.InactivityINT(1);	// Turn off Interrupts for Activity(1 == ON, 0 == OFF)
-    adxl.ActivityINT(1);
-    adxlInterruptTriggered = false;
-  }
-}
-
 void Ztamper::loop()
 {
-  loop_process_adxl_interrupt();
+  loop_adxl345();
   
   if (isRising()) rise();
   else if (isHigh()) stayHigh();
@@ -90,8 +65,6 @@ void Ztamper::loop()
   else crash("Ztamper::loop() - Logic error\n");
 }
 
-/////////////
-// Setup ADXL345
 void Ztamper::setup_adxl345()
 {
   debug("ADXL345 Setup\n");
@@ -121,7 +94,34 @@ void Ztamper::setup_adxl345()
   adxl.ActivityINT(1);
 
   // Need to set int1 pin as an input before calling atttachInterrupt
-  pinMode(interruptPin,INPUT);
-  attachInterrupt(interruptPin, ADXL_ISR, CHANGE);
+  pinMode(ADXL_INTERRUPT_PIN, INPUT);
+  attachInterrupt(ADXL_INTERRUPT_PIN, ADXL_ISR, CHANGE);
+}
+
+void Ztamper::loop_adxl345()
+{
+  tamperInterruptTriggered_prev = tamperInterruptTriggered;
+  tamperInterruptTriggered = false;	//let's see if any possible adxl int is really a tamper int
+  
+  if (adxlInterruptTriggered) {
+    adxl.InactivityINT(0);	// Turn off Interrupts for Activity(1 == ON, 0 == OFF)
+    adxl.ActivityINT(0);
+    // getInterruptSource clears all triggered actions after returning value
+    // Do not call again until you need to recheck for triggered actions
+    byte interrupts = adxl.getInterruptSource();	//must be a bit mask I guess
+
+    // Inactivity
+    if (adxl.triggered(interrupts, ADXL345_INACTIVITY)) {
+      //seems like a good place here for a heartbeat message back to HQ
+      //
+    }
+    
+    // Activity
+    tamperInterruptTriggered = adxl.triggered(interrupts, ADXL345_ACTIVITY);
+    
+    adxl.InactivityINT(1);	// Turn off Interrupts for Activity(1 == ON, 0 == OFF)
+    adxl.ActivityINT(1);
+    adxlInterruptTriggered = false;
+  }
 }
 

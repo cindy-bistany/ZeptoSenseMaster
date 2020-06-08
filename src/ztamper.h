@@ -25,7 +25,7 @@ class Ztamper {
 
   void setup_adxl345();
   void loop_adxl345();
-}
+};
 
 extern Ztamper ztamper;
 
