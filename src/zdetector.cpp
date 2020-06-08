@@ -10,157 +10,49 @@
 #include "ziaq.h"
 #include "ztamper.h"
 
-Detector detector;
+Zdetector zdetector;
 
-void Detector::setup(Zstate st)
+void Zdetector::setup()
 {
-  Ziaq.setup();
-  Zpmcounter.setup();
+  ziaq.setup();
+  zpmcounter.setup();
+  ztamper.setup();
 }
 
-void readings_get(Zstate *st)
+void readings_get()
 {
-  debug("start readSensors\n");
-#ifdef KURTDEBUG
-  String msg = "";
-  msg = msg + "State values are: \n" +
-    "Buzzer Tamper " + state.buzzerTamper + "\n" +
-    "Buzzer Vapor " + state.buzzerVapor + "\n" +
-    "Notify Vapor " + state.notifyVapor + "\n" +
-    "Notify Tamper " + state.notifyTamper + "\n" +
-    "Notify Battery " + state.notifyBattery + "\n" +
-    "Activity Threshold " + state.ActivityThreshold + "\n" +
-    "Device Zone " + state.deviceZone + "\n";
-  debug(msg);
-#endif 
-  // Woke up out of a sleep - setup the HW
-  if (state.bInSleepMode)
-    hw_wakeup();
-  st->stateStr = "RDY";
-  connectWithoutWaiting();
-  setup_rtc();
-  
-  // Request the GMT offset if Particle is connected and it has not yet been received
-  if (Particle.connected&&!gmtOffsetValid)
-  {
-    publishGMTOffsetRequest();
-  }
-  checkAccel();
-  if (Sensor.dataAvailable()) { 
-    Sensor.getMass(mass_concen);
-    Sensor.getNum(num_concen);
+  ztamper.loop();
+  zdetector.read();
+  zblynk.update_all_readings();
 
-    debug("--Mass Concentration--\n");
-    for(i=0; i<4;i++) {
-        debugf("%s: %0.2f\r\n", pm[i+1],mass_concen[i]);
-    }
-    
-    debug("--Number Concentration--\n");
-    for(i=0; i<5;i++) {
-        debugf("%s: %0.2f\r\n", pm[i],num_concen[i]);
-    }
-    // Sensor.massPM1, Sensor.massPM25, Sensor.massPM4, Sensor.massPM10     
-    field1 = String::format("%0.1f", Sensor.massPM1);
-    field2 = String::format("%0.1f", Sensor.massPM25);
-    field3 = String::format("%0.1f", Sensor.massPM4);
-    field4 = String::format("%0.1f", Sensor.massPM10);
-
-    //////////
-    temp1 = sensor1.getTemp(1,"F");  // Use .getTemp(n, "F") to get temp in Fahrenheit, with n as int number of seconds for averaging and "F" or "C" for temp units
-    conc1 = sensor1.getConc(1,sensor1.getTemp(1));
-    
-    debugf("temp1: %f\n", temp1);
-    //Use .getVgas(int n) where n is the number of seconds to average
-    //Use ._Vref to read the reference voltage (voltage offset)
-    debugf("Vgas: %f\n", sensor1.getVgas(1));
-    //Use .getConc(1, temp1) where temp1 is in deg C for temperature corrected span
-    debugf("Conc: %f\n", conc1);
-
-    field5 = String::format("%0.1f", conc1);
-    field6 = String::format("%0.1f", temp1);
-
-    /////////
-
-    #if Wiring_Cellular
-    float batCharge = fuel.getSoC();
-    field7 = String::format("%0.0f", batCharge);
-    CellularSignal sig = Cellular.RSSI();
-    field8 = String::format("%d", 100*sig.qual/49);
-    #endif
-
-    #if Wiring_WiFi
-    float voltage = analogRead(BATT) * 0.0011224;
-    float batCharge = exp(5.0601*voltage)*0.0000001;
-    if (batCharge>100) batCharge = 100;
-    field7 = String::format("%0.0f", batCharge);
-    WiFiSignal sig = WiFi.RSSI();
-    field8 = String::format("%d", (int)sig.getQuality());
-    #endif
-
-    datastring = field1+":"+field2+":"+field3+":"+field4+":"+field5+":"+field6+":"+field7+":"+field8;
-
-    // You can send any value at any time.
-    // Please don't send more that 10 values per second.
-    // Blynk.virtualWrite(V1, Sensor.massPM1);
-    // Blynk.virtualWrite(V2, Sensor.massPM25);
-    // Blynk.virtualWrite(V3, Sensor.massPM4);
-    // Blynk.virtualWrite(V4, Sensor.massPM10);
-    // Blynk.virtualWrite(V5, conc);
-    // Blynk.virtualWrite(V6, temp1);
-    // Blynk.virtualWrite(V7, fuel.getSoC());
-    // Blynk.virtualWrite(V8, sig.qual);
-    Blynk.virtualWrite(V1, field1);
-    Blynk.virtualWrite(V2, field2);
-    Blynk.virtualWrite(V3, field3);
-    Blynk.virtualWrite(V4, field4);
-    Blynk.virtualWrite(V5, field5);
-    Blynk.virtualWrite(V6, field6);
-    Blynk.virtualWrite(V7, field7);
-    Blynk.virtualWrite(V8, field8);   
-
-    // Particle.publish("Test readings",datastring,60,PRIVATE);
-    debug(datastring + "\n");
-    sensorValid = true;
+  sensorValid = true;
     String statusMessage;
     String alertMessage;
     // Check to see if there is an alert state and act on it
-    if (runExpression(state.expression))
-    {
+    if (runExpression(state.expression))     {
       currentAlert = true;
-      Blynk.virtualWrite(V9,alertGreenImage);
-      Blynk.virtualWrite(V9,alertRedImage);
+      zblynk.greenAlert();
+      zblynk.redAlert();
+      //Blynk.virtualWrite(V9,alertGreenImage);
+      //Blynk.virtualWrite(V9,alertRedImage);
       
-      if (st->timeSynced)
-      {
-        // statusMessage = "ALERT! "+Time.format(rtc.rtcNow()+gmtOffsetSeconds,"%D %R")+" "+field7+"%";
-        statusMessage = "ALRT! "+Time.format(rtc.rtcNow()+gmtOffsetSeconds,"%h%e %R")+" "+field7+"%";
-      }
-      else
-      {
-        statusMessage = "ALERT!             "+field7+"%";
-      }
-      Blynk.virtualWrite(V30,statusMessage);
-      if (st->terminalDebug) Blynk.virtualWrite(V21, Time.timeStr()+"|"+String(gmtOffsetSeconds));
+      if (st->timeSynced) statusMessage = "ALRT! "+ Time.format(rtc.rtcNow()+gmtOffsetSeconds,"%h%e %R") + " " + zdetector.batteryLevel() +"%";
+      else statusMessage = "ALERT!             "+ zdetector.batteryLevel() +"%";
+      blynk.status_message(statusMessage);
+      if (st->terminalDebug) zblynk.debug_message(Time.timeStr() + "|" + String(gmtOffsetSeconds));
     }
-    else
-    {
-      Blynk.virtualWrite(V0,0);
+    else {
+      Blynk.virtualWrite(V0,0);	//what does this do?
       if (st->tamperCurrentAlert){
         st->stateStr="ALRT!";
-        Blynk.virtualWrite(V9,alertRedImage);
+	zblynk.redAlert();
+        //Blynk.virtualWrite(V9,alertRedImage);
       }
-      else
-        Blynk.virtualWrite(V9,alertGreenImage);
-      if (timeSynced)
-      {
-        // statusMessage = "OK "+Time.format(rtc.rtcNow()+gmtOffsetSeconds,"%D %R")+" "+field7+"%";
-        statusMessage = st->stateStr+" "+Time.format(rtc.rtcNow()+gmtOffsetSeconds,"%h%e %R")+" "+field7+"%";
-      }
-      else
-      {
-        statusMessage = st->stateStr + "                " + field7 + "%";
-      }
-      int messagesize=statusMessage.length();
+      else zblynk_greenAlert();	// Blynk.virtualWrite(V9,alertGreenImage);
+      if (timeSynced) statusMessage = st->stateStr + " " + Time.format(rtc.rtcNow()+gmtOffsetSeconds,"%h%e %R") + " " + zdetector.batteryLevel() + "%";
+      else statusMessage = st->stateStr + "                " + field7 + "%";
+
+      int messagesize = statusMessage.length();
       if (messagesize<5){
         statusMessage=String::format("Updating");
         debug(statusMessage + "\n");
@@ -266,7 +158,7 @@ void readings_get(Zstate *st)
   readingCount++;
 }
 
-float Detector::read()
+float Zdetector::read()
 {
   const unsigned long timeout = 8100;
   unsigned long startTime = millis();
@@ -277,27 +169,29 @@ float Detector::read()
       break;
     }
     else {
-      zstate.tampered |= ztamper.tampered();
+      ztamper.loop();
       delay(100);
     }
 }
 
-float Detector::pm1()  { return zpmcounter.mass_concentration(1); }
-float Detector::pm25() { return zpmcounter.mass_concentration(1); }
-float Detector::pm4()  { return zpmcounter.mass_concentration(2); }
-float Detector::pm10() { return zpmcounter.mass_concentration(3); }
+float Zdetector::pm1()  { return zpmcounter.mass_concentration(1); }
+float Zdetector::pm25() { return zpmcounter.mass_concentration(1); }
+float Zdetector::pm4()  { return zpmcounter.mass_concentration(2); }
+float Zdetector::pm10() { return zpmcounter.mass_concentration(3); }
 
-int tempF() { return ziaqsensor.getTemp(1, "F"); }
+int Zdetector::tempF() { return ziaqsensor.getTemp(1, "F"); }
 
-int tempC() { return ziaqsensor.getTemp(1); }
+int Zdetector::tempC() { return ziaqsensor.getTemp(1); }
 
-float Detector::mass_concentration(int i) {  return zpmcounter.mass_concentration(i);  }
+float Zdetector::mass_concentration(int i) {  return zpmcounter.mass_concentration(i);  }
 
-float Detector::numeric_concentration(int i)  {  return zpmcounter.numeric_concentration(i);  }
+float Zdetector::numeric_concentration(int i)  {  return zpmcounter.numeric_concentration(i);  }
 
-float Detector::vgas()  {  return iaqsensor.getVgas(1);  }
+float Zdetector::vgas()  {  return iaqsensor.getVgas(1);  }
 
-float Detector::gas_concentration()  {  return iaqsensor.getConc(1, temperatureC);  }
+float Zdetector::gas_concentration()  {  return iaqsensor.getConc(1, temperatureC);  }
 
+bool Zdetector::tampered() { return ztamper.tampered(); }
+void Zdetector::tamperReset() { ztamper.reset(); }
 
   

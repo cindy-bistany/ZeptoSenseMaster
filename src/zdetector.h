@@ -1,14 +1,14 @@
 #ifndef ZDETECTOR_H
 #define ZDETECTOR_H
 
-class Detector {
+class Zdetector {
  public:
   void setup();
   void clear();
   void read();
 
   bool tamperIsOn();
-  void tamperOff();
+  void tamperReset();
   
   float pm1();
   float pm25();
@@ -30,6 +30,6 @@ class Detector {
   float pmnum_concentration[5];
 };
 
-extern Detector detector;
+extern Zdetector zdetector;
 
 #endif

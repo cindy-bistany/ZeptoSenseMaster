@@ -10,11 +10,13 @@ class Baseboard {
   void setup();
   void shutdown();
 
-  void powerOnOff(int which, bool onoff);
-  int powerIsOnOff();
+  void power3(bool onoff);
+  void power5(bool onoff);
+  bool power3IsOn();
+  bool power5IsOn();
   bool batteryIsCharged();
   float batteryLevel();
-  float signalStrength();
+  int signalStrength();
 
   void buzzer(bool onoff);
 

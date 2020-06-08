@@ -215,9 +215,9 @@ void Baseboard::setup()
   setup_expander();
   
   boardPower.begin();
-  boardPower.setPowerON(EXT3V3, false);
-  boardPower.setPowerON(EXT5V, false);
-  v3IsOn = v5IsOn = false;
+  boardPower.setPowerON(EXT3V3, true);
+  boardPower.setPowerON(EXT5V, true);
+  v3IsOn = v5IsOn = true;
   
   setup_i2c();
   //setup_clock(st);
@@ -253,16 +253,17 @@ float Baseboard::batteryLevel()
 //////////////
 
 
-float Baseboard::signalStrength()
+int Baseboard::signalStrength()
 {
 #if Wiring_Cellular
     CellularSignal sig = Cellular.RSSI();
+    return int(100*sig.qual/49);
 #endif
 
 #if Wiring_WiFi
     WiFiSignal sig = WiFi.RSSI();
+    return int(sig.getQuality());
 #endif
-    return sig;
 }
 
 void Baseboard::buzzer(bool onoff)
@@ -284,7 +285,8 @@ void Baseboard::shutdown()
   */
   
   delay(3000);
-  powerOnOff(0, false);
+  power3(false);
+  power5(false);
   if (!Wire.isEnabled()) Wire.end();  // Release I2C bus for expander
 
   debug("Going to sleep\n");
@@ -303,30 +305,26 @@ void Baseboard::shutdown()
   #endif  
 }
 
-void Baseboard::powerOnOff(int which, bool onoff)
+void Baseboard::power3(bool onoff)
 {
-  switch (which) {
-  case 3:
-    boardPower.setPowerON(EXT3V3, onoff);
-    v3IsOn = onoff;
-    break;
-  case 5:
-    boardPower.setPowerON(EXT5V, onoff);
-    v5IsOn = onoff;
-    break;
-  default:
-    boardPower.setPowerON(EXT3V3, onoff);
-    boardPower.setPowerON(EXT5V, onoff);
-    v3IsOn = v5IsOn = onoff;
-  }
+  boardPower.setPowerON(EXT3V3, onoff);
+  v3IsOn = onoff;
 }
 
-int Baseboard::powerIsOnOff()
+void Baseboard::power5(bool onoff)
 {
-  int ret = 0;
-  if (v3IsOn) ret |= 1;
-  if (v5IsOn) ret |= 2;
-  return ret;
+  boardPower.setPowerON(EXT5V, onoff);
+  v5IsOn = onoff;
+}
+
+bool Baseboard::power3IsOn()
+{
+  return v3IsOn;
+}
+
+bool Baseboard::power5IsOn()
+{
+  return v5IsOn;
 }
 
 
