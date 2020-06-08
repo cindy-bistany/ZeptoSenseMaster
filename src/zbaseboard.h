@@ -1,7 +1,7 @@
 //emacs -*- c++ -*-
 
-#ifndef BASEBOARD_H
-#define BASEBOARD_H
+#ifndef ZBASEBOARD_H
+#define ZBASEBOARD_H
 
 #include "zstate.h"
 

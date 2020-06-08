@@ -1,8 +1,7 @@
 #ifndef ZBLYNK_H
 #define ZBLYNK_H
 
-#include <string>
-using namespace std;
+#include "application.h"
 
 #include <blynk.h>
 #include "zstate.h"
@@ -11,8 +10,8 @@ class Zblynk {
  public:
   void init(Zstate *st);
 
-  void status_message(string msg);
-  void debug_message(string msg);
+  void status_message(String msg);
+  void debug_message(String msg);
 
   void setAppWidgets(Zstate *st);
   void initializeAppWidgets(Zstate *st);

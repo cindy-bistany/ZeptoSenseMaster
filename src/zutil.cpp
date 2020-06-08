@@ -1,4 +1,5 @@
-#include "zstate.h"
+#include "zutil.h"
+#include "zblynk.h"
 
 //make a loop to go through the bit pattern parameter
 //each bit gets a beep
@@ -14,8 +15,14 @@
 #define char_space dash_length
 #define word_space (7*dot_length)
 
-#define buzzon() digitalWrite(buzzer, HIGH)
-#define buzzoff() digitalWrite(buzzer, LOW)
+void buzzon() { digitalWrite(BUZZER, HIGH); }
+void buzzoff() { digitalWrite(BUZZER, LOW); }
+
+void crash(char *msg)
+{
+  zblynk.debug_message(String("System resetting with condition %s\n") + msg);
+  System.reset();
+}
 
 // EXAMPLE - defining and using a LED status
 LEDStatus blinkYellow(RGB_COLOR_YELLOW, LED_PATTERN_BLINK, LED_SPEED_NORMAL, LED_PRIORITY_IMPORTANT);
@@ -35,17 +42,17 @@ void blinkpanic()
 
 
 void beep(String s) {
-  for (int i=0; i<len(s); i++) {
+  for (int i=0; i < s.length(); i++) {
     switch (s[i]) {
-    '0':
-    '.':
+    case '0':
+    case '.':
       buzzon(); delay(dot_length); buzzoff(); delay(dot_length);
       break;
-    '1':
-    '-':
+    case '1':
+    case '-':
       buzzon(); delay(dash_length); buzzoff(); delay(dot_length);
       break;
-    ' ':
+    case ' ':
       buzzoff(); delay(dash_length); 
       break;
     default:
@@ -55,24 +62,4 @@ void beep(String s) {
   buzzoff(); //belt & suspenders
 }
 
-void deepSleep(Zstate *st)
-{
-  shutdown_basehw(st);
-  st->save());
-  debug("Going to sleep\n");
-  
-  if (st->bSleepModeStandby){
-    debug("Going to standby sleep\n");
-    st->bInSleepMode=true;
-    System.sleep(D8, RISING, 900, SLEEP_NETWORK_STANDBY);
-    return;
-  }
-  else{
-    debug("Going to deep sleep\n");
-    st->bSleepModeStandby=false;
-    st->bInSleepMode=true;
-    delay(2000);
-    System.sleep(SLEEP_MODE_DEEP); 
-    }
-}
 

@@ -2,7 +2,8 @@
 #include <Particle.h>
 #include <cstdlib>
 
-#include "util.h"
+#include "zbuild.h"
+#include "zutil.h"
 #include "zclock.h"
 
 // Create new instance of RTC class:
@@ -26,6 +27,7 @@ void Zclock::setup()
   if (Time.isValid() && !timeIsSynchronized) {
     unsigned long now = Time.now();
     rtc.setUnixTime(now);
+
     unsigned long rtcnow = rtc.rtcNow();
     unsigned long diff = rtcnow - now;
     if (diff < 0) diff = -diff;
@@ -33,6 +35,14 @@ void Zclock::setup()
       timeIsSynchronized = true;
       debug("Time is synced to the cloud\n"); 
     }
+  }
+  
+  long int jan_1_2000 = 946684800;
+  long int jan_1_2099 = 4102444799;
+  long int clockTime = rtc.rtcNow();
+  if (clockTime<jan_1_2000 || clockTime>jan_1_2099) {
+    rtc.setUnixTime(BUILD_NUMBER);
+    timeIsSynchronized = false;
   }
   Particle.subscribe("hook-response/gmtOffset", gmtOffsetHandler, MY_DEVICES);
   if (Particle.connected() && !gmtOffsetValid) 
@@ -45,17 +55,6 @@ uint32_t Zclock::now() {
   return rtc.rtcNow();
 }
 
-void Zclock::on()
-{
-  ///////////WWWWWWWWWWWWWWWWWWWWWWhat is this for
-  long int clockTime = rtc.rtcNow();
-  if (clockTime<946684800||clockTime>4102444799) {
-      // 2019-01-01T00:00:00+00:00 in ISO 8601
-      // Actual time is not important for rtc reset but needs to be a positive unix time
-      rtc.setUnixTime(1262304000);
-    }
-  timeIsSynchronized = false;
-}
 
 void Zclock::setTimeZone(int tz) { deviceTimeZone = tz; }
 int Zclock::getTimeZone() { return deviceTimeZone; }
@@ -66,9 +65,9 @@ void Zclock::setGMTOffset(long offset)
   gmtOffsetValid = true;
 }
 
-string Zclock::timeZoneName()
+String Zclock::timeZoneName()
 {
-  string zone;
+  String zone;
   switch (zclock.getTimeZone()) {
   case 0:
     zone = "America/New_York";

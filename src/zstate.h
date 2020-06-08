@@ -2,28 +2,24 @@
 #define ZSTATE_H
 
 #include <stdint.h>
-#include <string>
-
-#define DEBUG 1
-
-#ifdef DEBUG
-#define debug(...) Serial1.print(__VA_ARGS__)
-#define debugf(...)  Serial1.printf(__VA_ARGS__)
-#else
-#define debug(...)
-#define debugf(...)
-#endif
+#include <string.h>
+using namespace std;
 
 
 //#####
 // Zeptive config variables
 //#####
-class Zstate_persistent {
+typedef struct Zstate_persistent { //struct for easy storage to FRAM
+ public:
   unsigned long build_number;	//serialized build number
   int build_random_number;	//to detect the very first power up after flashing
   bool terminalDebug;
+
+  int deviceTimeZone;
+  long int gmtOffsetSeconds;
+  bool timeIsSynchronized;
   
-  unsigned long wakeuptime, onTime, backhaulTime;
+  unsigned long wakeupTime, accumulatedOnTime, backhaulOnTime;
 
 
   uint16_t portBlynk;	//probably should be hived off into blynk
@@ -65,7 +61,7 @@ class Zstate_persistent {
 
   //This I think was the state of the powered-almost-off mode.  But I also this should always be true, except first run.
   bool bInSleepMode; // If TRUE was in a sleep
-};
+} Zstate_persistent;
 
 class Zstate {
  public:
@@ -75,10 +71,15 @@ class Zstate {
   void factory_reset();
   void save();
   void load();
+  char *c_str();
+  void deepSleep();
 };
 
 /*
   bool powerOn, appConnected, sensorValid, currentAlert,
     batCurrentAlert, tamperCurrentAlert;
 */
+
+extern Zstate zstate;
+
 #endif

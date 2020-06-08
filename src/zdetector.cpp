@@ -5,23 +5,17 @@
 //	2) indoor air quality sensor (IAQ)
 //###############
 
-#include "detector.h"
-#include "pmcounter.h"
-#include "iaq.h"
-#include "tamper.h"
+#include "zdetector.h"
+#include "zpmcounter.h"
+#include "ziaq.h"
+#include "ztamper.h"
 
 Detector detector;
 
-void Detector::setup()
-{
-}
-
-
-
 void Detector::setup(Zstate st)
 {
-  setup_iaq(st);
-  setup_pmcounter();
+  Ziaq.setup();
+  Zpmcounter.setup();
 }
 
 void readings_get(Zstate *st)
@@ -190,13 +184,10 @@ void readings_get(Zstate *st)
 	       }
      }
 
-    if (alertChanged())
-    {
-      if (currentAlert)
-      {
+    if (alertChanged()) {
+      if (currentAlert) {
           
-        if (state.buzzerVapor==true)
-        {
+        if (state.buzzerVapor==true) {
             //Buzzer On
             digitalWrite(buzzer, HIGH);
             VapeAlertBuzzerTime = millis();
@@ -205,8 +196,7 @@ void readings_get(Zstate *st)
 	          VapeBuzzerOn=true;
             //delay(8000);
         }
-        if (state.notifyVapor==true)
-        {
+        if (state.notifyVapor==true) {
           #ifdef Version_2
           Blynk.logEvent("vape_alert");
           VapeAlertTime = millis();
@@ -233,21 +223,12 @@ void readings_get(Zstate *st)
       
     }
 
-    if (batCharge<state.batThreshold)
-    {
-      batCurrentAlert = true;
-    }
-    else
-    {
-      batCurrentAlert = false;
-    }
+    if (batCharge<state.batThreshold) batCurrentAlert = true;
+    else batCurrentAlert = false;
 
-    if (batAlertChanged())
-    {
-      if (batCurrentAlert)
-      {
-       if (state.notifyBattery==true)
-        {
+    if (batAlertChanged()) {
+      if (batCurrentAlert) {
+       if (state.notifyBattery==true) {
           #ifdef Version_2
           Blynk.logEvent("low_battery_alert_20");
           #else
@@ -255,10 +236,8 @@ void readings_get(Zstate *st)
           #endif
         }
       }
-      else
-      {
-       if (state.notifyVapor==true)
-        {
+      else {
+       if (state.notifyVapor==true) {
           #ifdef Version_2
           //Blynk.logEvent("low_battery_alert_ended_20");
           //Particle.publish("Low battery","low_battery_alert_ended_20",PRIVATE);
@@ -271,10 +250,8 @@ void readings_get(Zstate *st)
     }
 
   }
-  else 
-  { 
-    if (!Sensor.beginMeasuring())
-    {
+  else { 
+    if (!pmcounter.beginMeasuring()) {
       debug("Unable to read SPS30 - resetting device 1\n");
       delay(1000);
       System.reset();
@@ -295,42 +272,32 @@ float Detector::read()
   unsigned long startTime = millis();
   
   while ((millis() - startTime) < timeout)
-    if (pmcounter.dataAvailable) {
-      pmcounter.getMass(mass_concentration);
-      pmcounter.getNum(numeric_concentration);
+    if (zpmcounter.dataAvailable) {
+      zpmcounter.read();
       break;
     }
     else {
-      tampered = accelerometer.tampered();
+      zstate.tampered |= ztamper.tampered();
       delay(100);
     }
-  vgas = iaqsensor.getVgas(1);
-  temperatureF = iaqsensor.getTemp(1, "F");
-  temperatureC = iaqsensor.getTemp(1);
-  gas_conc = iaqsensor.getConc(1, temperatureC);
-  
 }
 
-float Detector::pm1()  { return mass_concentration[0]; }
-float Detector::pm25() { return mass_concentration[1]; }
-float Detector::pm4()  { return mass_concentration[2]; }
-float Detector::pm10() { return mass_concentration[3]; }
+float Detector::pm1()  { return zpmcounter.mass_concentration(1); }
+float Detector::pm25() { return zpmcounter.mass_concentration(1); }
+float Detector::pm4()  { return zpmcounter.mass_concentration(2); }
+float Detector::pm10() { return zpmcounter.mass_concentration(3); }
 
+int tempF() { return ziaqsensor.getTemp(1, "F"); }
 
-float Detector::numeric_concentration(int i)
-{
-  return numeric_contration[i];
-}
+int tempC() { return ziaqsensor.getTemp(1); }
 
-float Detector::vgas()
-{
-  return vgas;
-}
+float Detector::mass_concentration(int i) {  return zpmcounter.mass_concentration(i);  }
 
-float Detector::gas_concentration()
-{
-  return gas_conc;
-}
+float Detector::numeric_concentration(int i)  {  return zpmcounter.numeric_concentration(i);  }
+
+float Detector::vgas()  {  return iaqsensor.getVgas(1);  }
+
+float Detector::gas_concentration()  {  return iaqsensor.getConc(1, temperatureC);  }
 
 
   

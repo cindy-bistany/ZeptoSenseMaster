@@ -1,5 +1,5 @@
-#ifndef DETECTOR_H
-#define DETECTOR_H
+#ifndef ZDETECTOR_H
+#define ZDETECTOR_H
 
 class Detector {
  public:

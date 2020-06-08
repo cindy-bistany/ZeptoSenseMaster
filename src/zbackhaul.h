@@ -1,10 +1,10 @@
 //emacs -*- c++ -*-
-#ifndef BACKHAUL_H
-#define BACKHAUL_H
+#ifndef ZBACKHAUL_H
+#define ZBACKHAUL_H
 
-#include "util.h"
+#include "zutil.h"
 #include "zstate.h"
-#include "auth.h"
+#include "zauth.h"
 
 class Backhaul {
  public:
@@ -15,5 +15,7 @@ class Backhaul {
  private:
   
 };
+
+Backhaul backhaul;
 
 #endif

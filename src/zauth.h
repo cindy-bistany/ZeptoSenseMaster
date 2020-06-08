@@ -1,5 +1,5 @@
-#ifndef AUTH_H
-#define AUTH_H
+#ifndef ZAUTH_H
+#define ZAUTH_H
 
 //auth
 extern char *auth;

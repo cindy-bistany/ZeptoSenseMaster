@@ -1,5 +1,5 @@
-#ifndef IAQ_H
-#define IAQ_H
+#ifndef ZIAQ_H
+#define ZIAQ_H
 
 class Ziaq {
  public:

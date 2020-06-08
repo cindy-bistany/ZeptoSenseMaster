@@ -1,6 +1,6 @@
 #include <tinyexpr.h>
 
-#include "detector.h"
+#include "zdetector.h"
 
 bool runExpression(char *expression, Detector *det)
 {   
