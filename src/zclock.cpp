@@ -2,6 +2,13 @@
 #include <Particle.h>
 #include <cstdlib>
 
+////
+//WARNING do not include zstate.h
+////
+//This class must have no dependencies on zstate
+//That is, no permanent storage 
+////
+
 #include "zbuild.h"
 #include "zutil.h"
 #include "zclock.h"

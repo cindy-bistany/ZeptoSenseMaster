@@ -20,6 +20,7 @@ void Ziaq::setup() { }
 int Ziaq::tempF()  { return iaqsensor.getTemp(1, "F"); }
 int Ziaq::tempC()  { return iaqsensor.getTemp(1, "C"); }
 float Ziaq::vgas() { return iaqsensor.getVgas(1); }
+float Ziaq::zero() { return iaqsensor.zero(); }
 
 
 float Ziaq::gas_concentration()

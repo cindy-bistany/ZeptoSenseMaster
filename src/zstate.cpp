@@ -64,6 +64,7 @@ void Zstate::factory_reset()
   
   p.deviceTimeZone = 0;		//America/New_York
   p.gmtOffsetSeconds = -4*3600;	//4 hours
+  p.gmtOffsetValid = false;
   p.timeIsSynchronized = false;
   p.accumulatedOnTime = 0;
   

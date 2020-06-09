@@ -1,10 +1,14 @@
 // emacs -*- c++ -*-
 //zblynk - glue code between blynk and zeptive
 #include "application.h"
-
 #include "blynk.h"
+
+//
 #include "zblynk.h"
 #include "zdetector.h"
+#include "zbackhaul.h"
+#include "ziaq.h"
+#include "zclock.h"
 
 #define BLYNKGREEN 0
 #define BLYNKRED 1
@@ -15,66 +19,67 @@ void Zblynk::setup() {  zblynk_connected = false;   Blynk.run();  }
 
 bool Zblynk::isConnected() { return zblynk_connected;  }
 
-void Zblynk::write_numberOfReadings(int numOfReadings)
-{
-  Blynk.virtualWrite(V10, numOfReadings);
-  Blynk.virtualWrite(V11, numOfReadings);
-}
-
-void Zblynk::write_secondsBetweenReadings(int secBetwReadings)
-{
-  Blynk.virtualWrite(V12, secBetwReadings);
-  Blynk.virtualWrite(V13, secBetwReadings);
-}
+void Zblynk::status_message(String msg)		{  Blynk.virtualWrite(V30, msg);  }
+void Zblynk::debug_message(String msg)  	{  Blynk.virtualWrite(V21, msg);  }
 
 void Zblynk::redAlert()		{  Blynk.virtualWrite(V9, BLYNKRED);  }
 void Zblynk::greenAlert()	{  Blynk.virtualWrite(V9, BLYNKGREEN);  }
 
-void Zblynk::status_message(String msg)		{  Blynk.virtualWrite(V30, msg);  }
-void Zblynk::debug_message(String msg)  	{  Blynk.virtualWrite(V21, msg);  }
-void Zblynk::write_zeroOffset(float zo)		{  Blynk.virtualWrite(V15, zo);  }
-void Zblynk::write_expression(char *expr)	{  Blynk.virtualWrite(V20, expr);  }
-void Zblynk::write_batteryThreshold(float thr)	{  Blynk.virtualWrite(V25, thr);  }
-void Zblynk::write_deviceTimeZone(int tz)	{  Blynk.virtualWrite(V23, tz);  }
-void Zblynk::write_enableVapeBuzzer(bool vb)	{  Blynk.virtualWrite(V27, vb);  }
-void Zblynk::write_enableTamperBuzzer(bool tb)	{  Blynk.virtualWrite(V24, tb);  }
-void Zblynk::write_enableVapeNotify(bool vn)	{  Blynk.virtualWrite(V28, vn);  }
-void Zblynk::write_enableBatteryNotify(bool bn)	{  Blynk.virtualWrite(V32, bn);  }
-void Zblynk::write_enableTamperNotify(bool tn)	{  Blynk.virtualWrite(V29, tn);  }
-void Zblynk::write_vapeEmail(char *email)	{  Blynk.virtualWrite(V16, email);  }
-void Zblynk::write_batteryEmail(char *email)	{  Blynk.virtualWrite(V18, email);  }
-void Zblynk::write_tamperEmail(char *email)	{  Blynk.virtualWrite(V26, email);  }
-void Zblynk::write_enterCode(char *msg)	{  Blynk.virtualWrite(V22, msg);  }
+void Zblynk::write_numberOfReadings()
+{
+  Blynk.virtualWrite(V10, zstate.p.numberOfReadings);
+  Blynk.virtualWrite(V11, zstate.p.numberOfReadings);
+}
 
-void Zblynk::write_activityThreshold(int at)
+void Zblynk::write_secondsBetweenReadings()
+{
+  Blynk.virtualWrite(V12, zstate.p.secondsBetweenReadings);
+  Blynk.virtualWrite(V13, zstate.p.secondsBetweenReadings);
+}
+
+void Zblynk::write_zeroOffset()		{  Blynk.virtualWrite(V15, zstate.p.zeroOffset);  }
+void Zblynk::write_expression()		{  Blynk.virtualWrite(V20, zstate.p.expression);  }
+void Zblynk::write_batteryThreshold()	{  Blynk.virtualWrite(V25, zstate.p.batteryThreshold);  }
+void Zblynk::write_deviceTimeZone()	{  Blynk.virtualWrite(V23, zstate.p.deviceTimeZone);  }
+void Zblynk::write_enableVapeBuzzer()	{  Blynk.virtualWrite(V27, zstate.p.enableBuzzerVape);  }
+void Zblynk::write_enableTamperBuzzer()	{  Blynk.virtualWrite(V24, zstate.p.enableBuzzerTamper);  }
+void Zblynk::write_enableVapeNotify()	{  Blynk.virtualWrite(V28, zstate.p.enableNotifyVape);  }
+void Zblynk::write_enableBatteryNotify(){  Blynk.virtualWrite(V32, zstate.p.enableNotifyBattery);  }
+void Zblynk::write_enableTamperNotify()	{  Blynk.virtualWrite(V29, zstate.p.enableNotifyTamper);  }
+void Zblynk::write_vapeEmail()		{  Blynk.virtualWrite(V16, zstate.p.vapeEmail);  }
+void Zblynk::write_batteryEmail()	{  Blynk.virtualWrite(V18, zstate.p.batteryEmail);  }
+void Zblynk::write_tamperEmail()	{  Blynk.virtualWrite(V26, zstate.p.tamperEmail);  }
+void Zblynk::write_enterCode()		{  Blynk.virtualWrite(V22, "Enter code to reset");  }
+
+void Zblynk::write_activityThreshold()
 {
   int outp = 2;
-  if (at == 144) outp = 3;
-  else if (at == 72) outp = 1;
+  if (zstate.p.activityThreshold == 144) outp = 3;
+  else if (zstate.p.activityThreshold == 72) outp = 1;
   Blynk.virtualWrite(V31, outp);
 }
 
 void Zblynk::update_all_state()
 {
-  write_numberOfReadings(zstate.p.numberOfReadings);
-  write_secondsBetweenReadings(zstate.p.secondsBetweenReadings);
-  write_zeroOffset(zstate.p.zeroOffset);
-  write_expression(zstate.p.expression);
-  write_batteryThreshold(zstate.p.batteryThreshold);
-  write_deviceTimeZone(zstate.p.deviceTimeZone);
+  write_numberOfReadings();
+  write_secondsBetweenReadings();
+  write_zeroOffset();
+  write_expression();
+  write_batteryThreshold();
+  write_deviceTimeZone();
   
-  write_enableVapeBuzzer(zstate.p.enableBuzzerVape);
-  write_enableTamperBuzzer(zstate.p.enableBuzzerTamper);
-  //write_enableBatteryBuzzer(zstate.p.enableBuzzerBattery);
+  write_enableVapeBuzzer();
+  write_enableTamperBuzzer();
+  //write_enableBatteryBuzzer();
   
-  write_enableVapeNotify(zstate.p.enableNotifyVape);
-  write_enableBatteryNotify(zstate.p.enableNotifyBattery);
-  write_enableTamperNotify(zstate.p.enableNotifyTamper);
-  write_vapeEmail(zstate.p.vapeEmail);
-  write_batteryEmail(zstate.p.batteryEmail);
-  write_tamperEmail(zstate.p.tamperEmail);
-  write_activityThreshold(zstate.p.activityThreshold);
-  write_enterCode("Enter code to reset");
+  write_enableVapeNotify();
+  write_enableBatteryNotify();
+  write_enableTamperNotify();
+  write_vapeEmail();
+  write_batteryEmail();
+  write_tamperEmail();
+  write_activityThreshold();
+  write_enterCode();
 }
 
 void Zblynk::write_pm1()		{  String str = String::format("%0.1f", zdetector.pm1());		Blynk.virtualWrite(V1, str); }
@@ -84,7 +89,7 @@ void Zblynk::write_pm10()		{  String str = String::format("%0.1f", zdetector.pm1
 void Zblynk::write_gas_concentration()	{  String str = String::format("%0.1f", zdetector.gas_concentration()); Blynk.virtualWrite(V5, str); }
 void Zblynk::write_tempF()		{  String str = String::format("%0.1f", zdetector.tempF());		Blynk.virtualWrite(V6, str); }
 void Zblynk::write_batteryLevel()	{  String str = String::format("%0.1f", zdetector.batteryLevel());	Blynk.virtualWrite(V7, str); }
-void Zblynk::write_signalStrength()	{  String str = String::format("%0.1f", zdetector.signalStrength());	Blynk.virtualWrite(V8, str); }
+void Zblynk::write_signalStrength()	{  String str = String::format("%0.1f", zbackhaul.signalStrength());	Blynk.virtualWrite(V8, str); }
 
 void Zblynk::update_all_readings()
 {
@@ -111,14 +116,14 @@ void Zblynk::update()
 
 // Update app connection state
 BLYNK_APP_CONNECTED() {
-  zblynk_connected = true;
-  update_all();
+  zblynk.zblynk_connected = true;
+  zblynk.update_all();
   debug("Connected\n");
 }
 
 BLYNK_APP_DISCONNECTED() {
   // Your code here
-  zblynk_connected = false;
+  zblynk.zblynk_connected = false;
   debug("Disconnected\n");
 }
 
@@ -142,10 +147,9 @@ BLYNK_WRITE(V22) //Reset Expression
 {
   String _resetKey = param.asStr();
   if (_resetKey.equals("resetme")) {
-    write_enterCode("Enter code to reset");
-    zstate.p.factory_reset();
-    update_all();
-    fram.erase();
+    zblynk.write_enterCode();
+    zstate.factory_reset();
+    zblynk.update_all();
     zblynk.debug_message("Hard Resetting");
     delay(500);
     System.reset();
@@ -156,9 +160,8 @@ BLYNK_WRITE(V22) //Reset Expression
 BLYNK_CONNECTED() {
   // Request Blynk server to re-send latest values for all pins
   debug("Blynk is now connected - syncing all pins.\n");
-  if (zstate.p.firstRunCheck != firstRunValue)
-      update_all();
   Blynk.syncAll();
+  zblynk.update_all();
   // You can also update individual virtual pins like this:
   //Blynk.syncVirtual(V0, V2);
 }
@@ -179,7 +182,7 @@ BLYNK_WRITE(V16) //Vape Email Expression
   bool checkEmail = true;
   _email.toLowerCase();
   if (checkEmail) {
-      strcpy(zstate.p.email, _email.c_str());
+      strcpy(zstate.p.vapeEmail, _email.c_str());
       zstate.save();
     }
   else Blynk.virtualWrite(V16, "Invalid address");
@@ -192,7 +195,7 @@ BLYNK_WRITE(V18) //Battery Email Expression
   bool checkEmail = true;
   _email.toLowerCase();
   if (checkEmail) {
-      strcpy(zstate.p.batEmail, _email.c_str());
+      strcpy(zstate.p.batteryEmail, _email.c_str());
       zstate.save();
     }
   else Blynk.virtualWrite(V18, "Invalid address");
@@ -217,7 +220,7 @@ BLYNK_WRITE(V14)
   if (param.asInt() == 1) {
       zstate.p.zeroOffset = ziaq.zero();
       zstate.save();
-      write_zeroOffset(zstate.p.zeroOffset);
+      zblynk.write_zeroOffset();
   }
   Blynk.virtualWrite(V14, 0);
   // Since data will be invalid save the new calibration and reset
@@ -234,10 +237,10 @@ BLYNK_WRITE(V17) {  zstate.p.terminalDebug = (param.asInt() == 1);  zstate.save(
 BLYNK_WRITE(V24) {  zstate.p.enableBuzzerTamper = param.asInt();  zstate.save();  }
 
 // Update buzzerVapor flag
-BLYNK_WRITE(V27) {  zstate.p.enableBuzzerVapor = param.asInt();  zstate.save();  }
+BLYNK_WRITE(V27) {  zstate.p.enableBuzzerVape = param.asInt();  zstate.save();  }
 
 // Update notifyVapor flag
-BLYNK_WRITE(V28) {  zstate.p.enableNotifyVapor = param.asInt();  zstate.save();  }
+BLYNK_WRITE(V28) {  zstate.p.enableNotifyVape = param.asInt();  zstate.save();  }
 
 // Update notifyTamper flag
 BLYNK_WRITE(V29) {  zstate.p.enableNotifyTamper = param.asInt();  zstate.save();  }
@@ -258,15 +261,15 @@ BLYNK_WRITE(V23)
 BLYNK_WRITE(V31) 
 {
   int thresh = param.asInt();
-  int oldvalue = zstate.p.ActivityThreshold;
+  int oldvalue = zstate.p.activityThreshold;
 
   switch (thresh) {
-  case 1:	zstate.p.ActivityThreshold =  72;	break;
-  case 3:	zstate.p.ActivityThreshold = 144;	break;
-  default:	zstate.p.ActivityThreshold = 100;	break;
+  case 1:	zstate.p.activityThreshold =  72;	break;
+  case 3:	zstate.p.activityThreshold = 144;	break;
+  default:	zstate.p.activityThreshold = 100;	break;
   }
   // If value changed since the acceleromter will need to be reinitalized save the new value and reset
-  if (zstate.p.ActivityThreshold != oldvalue) {
+  if (zstate.p.activityThreshold != oldvalue) {
     zstate.save();
     delay(4000);
     System.reset();

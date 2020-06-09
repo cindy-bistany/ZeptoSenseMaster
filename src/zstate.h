@@ -18,6 +18,7 @@ typedef struct Zstate_persistent { //struct for easy storage to FRAM
 
   int deviceTimeZone;
   long int gmtOffsetSeconds;
+  bool gmtOffsetValid;
   bool timeIsSynchronized;
   
   unsigned long wakeupTime, accumulatedOnTime, backhaulOnTime;
@@ -52,12 +53,6 @@ typedef struct Zstate_persistent { //struct for easy storage to FRAM
   bool enableNotifyTamper;	// Tamper Notify
   bool enableNotifyBattery;	// Battery Notify
 
-  //Telcos don't like constant re/dis/connecting, and shut you off when it happens
-  //This must be used to sleep for a while but keeping the phone on.
-  bool bSleepModeStandby; // If TRUE will do a SLEEP_NETWORK_STANDBY if FALSE will do a SLEEP_MODE_DEEP
-
-  //This I think was the state of the powered-almost-off mode.  But I also this should always be true, except first run.
-  bool bInSleepMode; // If TRUE was in a sleep
 } Zstate_persistent;
 
 class Zstate {

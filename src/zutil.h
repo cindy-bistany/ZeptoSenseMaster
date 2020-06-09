@@ -7,9 +7,9 @@
 
 #define BUZZER D7
 
-#define DEBUG 1
+#define ZDEBUG 1
 
-#ifdef DEBUG
+#ifdef ZDEBUG
 #define debug(...) Serial1.print(__VA_ARGS__)
 #define debugf(...) Serial1.printf(__VA_ARGS__)
 #else

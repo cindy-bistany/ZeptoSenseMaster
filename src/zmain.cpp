@@ -4,98 +4,38 @@
 
 #include "zstate.h"
 #include "zbaseboard.h"
+#include "zdetector.h"
+#include "zclock.h"
+#include "zbackhaul.h"
+#include "zalerts.h"
 
-setup()
+void setup()
 {
   //just waking up from power off
   unsigned long wakeupTime = millis();	//note what time we woke up
-
+  //must do this first b/c if woken up from snooze, we may just want to go back to lower power sleep
+  zclock.setup();
+  
+  //evidently we didn't decide to go back to sleep
   zstate.setup();
-  zstate.p.wakeuptime = wakeuptime;
+  zstate.p.wakeupTime = wakeupTime;
   zbaseboard.setup();
+  zbackhaul.setup();
   zdetector.setup();
   zalerts.setup();
-  zbackhaul.setup();
-
-  
-
-  currentState.load();		//restore prev or init new state
-  currentState.wakeupTime = wakeupTime;	//note the original wake up time.
-  currentState.readingCount = 0;
-  currentState.bInSleepMode = false;
-
-  setup_clock(&currentState);
-  setup_protection(&currentState);
-  setup_detection(&currentState);
-  setup_alerts(&currentState);
-  setup_backhaul(&currentState);
 }
 
-loop()
+void loop()
 {
-   //If woken up by a RTC Sleep then was in Standby so go into Deep Sleep now
-  SleepResult result = System.sleepResult();
-  switch (result.reason()) {
-    case WAKEUP_REASON_NONE: {
-      break;
-    }
-    case WAKEUP_REASON_PIN: {
-      break;
-    }
-    case WAKEUP_REASON_RTC: {
-      //this looks like the "light sleep" wakeup
-      //the cell modem has been on, but we have timed out sleeping, so safe to turn it off.
-      debug("Device was woken up by the Particle RTC (after 15 minutes), go into Deep Sleep\n");
-      state.bSleepModeStandby=false;
-      // Delay here in loop is okay because we are about to sleep
-      digitalWrite(buzzer, LOW);
-      delay(2000);
-      deepSleep();
-      break;
-    }
-    case WAKEUP_REASON_PIN_OR_RTC: {
-      break;
-    }
-  }
-
-  // Note the use of timers in the loop per Blynk best practice
-  sensorTimer.run(); // BlynkTimer is working...
-  accelTimer.run();
-
-  if (readingCount>=state.numberOfReadings)// Number of readings variable
-  {
-    // Delay here in loop is okay because we are about to sleep
-    digitalWrite(buzzer, LOW);
-    delay(2000);
-    deepSleep();
-  }
+  zdetector.read();
+  zalerts.loop();
+  crash("test");
+    
 }
 
-
+/*
 //***************** INTERRUPT ******************
 int interruptPin = A0;                 // Setup pin A0 for Boron
-
-#ifdef PARTICLE
-#else
-  #include "arduino.h"
-  #include <Wire.h>  
-#endif //end of #ifdef PARTICLE
-
-#define Version_2
-
-
-#ifdef Version_2
-#define alertRedImage 1
-#define alertGreenImage 0
-#else
-#define alertRedImage 2
-#define alertGreenImage 1
-#endif
-
-// SYSTEM_MODE(SEMI_AUTOMATIC);
-// SYSTEM_THREAD(ENABLED);
-
-
 
 char *pm[5] = {"PM0.5", "PM1.0", "PM2.5", "PM4.0", "PM10"};
 
@@ -110,36 +50,4 @@ String StateString = "RDY";
 BlynkTimer sensorTimer; // Create a Timer object called "sensorTimer"!
 BlynkTimer accelTimer; // Create an accelerometer Timer object
 
-///////////////////////
-
-readhw();
-
-// Checks if alert status changed and resets lastAlert if it has
-bool alertChanged(Zstate *st)
-{
-  if (st->currentAlert == st->lastAlert)
-    return false;
-  st->lastAlert = currentAlert;
-  saveState(st);
-  return true;
-}
-
-// Checks if alert status changed and resets lastAlert if it has
-bool batAlertChanged(Zstate *st)
-{
-  if (st->batCurrentAlert == st->batLastAlert)
-    return false;
-  st->batLastAlert = batCurrentAlert;
-  saveState(st);
-  return true;
-}
-
-// Checks if tamper alert status changed 
-bool tamperAlertChanged(Zstate *st)
-{
-  if (st->tamperCurrentAlert == st->tamperLastAlert)
-    return false;
-  st->tamperLastAlert = tamperCurrentAlert;
-  saveState(st);
-  return true;
-}
+*/

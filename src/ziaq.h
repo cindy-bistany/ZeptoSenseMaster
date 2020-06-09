@@ -7,7 +7,8 @@ class Ziaq {
   int tempF();
   int tempC();
   float gas_concentration();
-
+  float zero();
+  
  private:
   float vgas();
 };

@@ -250,19 +250,6 @@ float Zbaseboard::batteryLevel()
 //////////////
 
 
-int Zbaseboard::signalStrength()
-{
-#if Wiring_Cellular
-    CellularSignal sig = Cellular.RSSI();
-    return int(100*sig.qual/49);
-#endif
-
-#if Wiring_WiFi
-    WiFiSignal sig = WiFi.RSSI();
-    return int(sig.getQuality());
-#endif
-}
-
 void Zbaseboard::buzzer(bool onoff)
 {
   digitalWrite(BUZZER, onoff);

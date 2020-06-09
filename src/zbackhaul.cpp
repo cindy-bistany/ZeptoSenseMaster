@@ -5,6 +5,20 @@
 
 void Zbackhaul::setup() { connect(); }
 
+int Zbackhaul::signalStrength()
+{
+#if Wiring_Cellular
+    CellularSignal sig = Cellular.RSSI();
+    return int(100*sig.qual/49);
+#endif
+
+#if Wiring_WiFi
+    WiFiSignal sig = WiFi.RSSI();
+    return int(sig.getQuality());
+#endif
+}
+
+
 // Adding explicit connect routine that has to work before the rest of the code runs
 void Zbackhaul::connect()
 {

@@ -21,29 +21,33 @@ class Zblynk {
   void status_message(String msg);
   void debug_message(String msg);
 
+  //This is managed privately, but access from external callback is required, so public here.
+  //So don't touch this or look at it from outside the class methods.
+  //Use isConnected() instead.
+  bool zblynk_connected;
+  //Likewise, these are not useful outside the class, but require access from blynk callback.
+  void write_enterCode();
+  void write_zeroOffset();
 
  private:
-  bool zblynk_connected;
 
-  //configuration
-  void write_numberOfReadings(int numOfReadings);
-  void write_secondsBetweenReadings(int secBetwReadings);
-  void write_zeroOffset(float zo);
-  void write_expression(char *expr);
-  void write_batteryThreshold(float thr);
-  void write_deviceTimeZone(int tz);
-  void write_enableVapeBuzzer(bool vb);
-  void write_enableTamperBuzzer(bool tb);
-  void write_enableVapeNotify(bool vn);
-  void write_enableBatteryNotify(bool bn);
-  void write_enableTamperNotify(bool tn);
-  void write_vapeEmail(char *email);
-  void write_batteryEmail(char *email);
-  void write_tamperEmail(char *email);
-  void write_enterCode(char *msg);
-  void write_activityThreshold(int at);
-
-  //Readings
+  //Write configuration to blynk
+  void write_numberOfReadings();
+  void write_secondsBetweenReadings();  
+  void write_expression();
+  void write_batteryThreshold();
+  void write_deviceTimeZone();
+  void write_enableVapeBuzzer();
+  void write_enableTamperBuzzer();
+  void write_enableVapeNotify();
+  void write_enableBatteryNotify();
+  void write_enableTamperNotify();
+  void write_vapeEmail();
+  void write_batteryEmail();
+  void write_tamperEmail();
+  void write_activityThreshold();
+  
+  //Write readings to blynk
   void write_pm1();
   void write_pm25();
   void write_pm4();
