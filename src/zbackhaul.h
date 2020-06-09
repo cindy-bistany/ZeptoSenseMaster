@@ -12,6 +12,7 @@ class Zbackhaul {
   void connect();
   void connectWithoutWaiting();
   bool isConnected();
+  void off();
 
  private:
   

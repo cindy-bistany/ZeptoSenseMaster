@@ -7,6 +7,7 @@
 #include "zclock.h"
 #include "zbaseboard.h"
 #include "zblynk.h"
+#include "zbackhaul.h"
 
 // Create new instance of RTC class:
 // Use to hard power cycle the device to reset I2C
@@ -23,8 +24,31 @@ void gmtOffsetHandler(const char *event, const char *data) {
 }
 ///
 
+void Zclock::deepSleep(long seconds)
+{
+  //seconds is the keepalive time for the cell modem
+  if (seconds > 0) System.sleep(D8, RISING, seconds, SLEEP_NETWORK_STANDBY);
+  else {
+    zbaseboard.shutdown();
+    zbackhaul.off();
+    System.sleep(SLEEP_MODE_DEEP);
+  }
+}
+
 void Zclock::setup()
-{  
+{
+  //If we woke up from the clock, that's because we left the cell modem on
+  //we can turn it off now
+  
+  SleepResult result = System.sleepResult();
+  switch (result.reason()) {
+  case WAKEUP_REASON_NONE:       break;
+  case WAKEUP_REASON_PIN:        break;
+  case WAKEUP_REASON_RTC:        deepSleep(0); break;
+  case WAKEUP_REASON_PIN_OR_RTC: break;
+  default: break;
+  }
+
   // Sync time if needed
   if (Time.isValid() && !timeIsSynchronized) {
     unsigned long now = Time.now();
@@ -80,7 +104,7 @@ String Zclock::timeZoneName()
   return zone;
 }
 
-
+/*
 void Zclock::timerSleep(long seconds)
 {
   String msg =  String(Time.format(now(), "%h%e %R")) + " " + zbaseboard.batteryLevel() + "%";
@@ -100,6 +124,7 @@ void Zclock::timerSleep(long seconds)
 
   delay(200);  
 }
+*/
 
 /*
 this was never called in the original code

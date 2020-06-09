@@ -2,7 +2,8 @@
 #define ZSTATE_H
 
 #include <stdint.h>
-#include <string.h>
+#include "application.h"
+
 using namespace std;
 
 
@@ -21,7 +22,6 @@ typedef struct Zstate_persistent { //struct for easy storage to FRAM
   
   unsigned long wakeupTime, accumulatedOnTime, backhaulOnTime;
 
-
   uint16_t portBlynk;	//probably should be hived off into blynk
   int portBuzzer;	//documented as D7, but what is D7?, maybe hive off into baseboard code
 
@@ -35,8 +35,8 @@ typedef struct Zstate_persistent { //struct for easy storage to FRAM
   float batteryThreshold;  //something to do with charging the battery in the 2-layer battery arch
   
   char expression[256];  //must be the test expression for raining alerts
-  char email[256];  //main email for alerts I think
-  char batEmail[256];  //email for battery alerts
+  char vapeEmail[256];  //main email for alerts I think
+  char batteryEmail[256];  //email for battery alerts
   char tamperEmail[256];  //email for tamper alerts
   
   bool lastAlert;  //guessing this is last vape alert
@@ -44,9 +44,11 @@ typedef struct Zstate_persistent { //struct for easy storage to FRAM
   bool tamperLastAlert;  //last tamper alert, but so what?
  //bool buzzerActivated;
 
+  bool enableBuzzerVape;	// Vape Buzzer
   bool enableBuzzerTamper;	// Buzzer Tamper
-  bool enableBuzzerVapor;	// Vapor Buzzer
-  bool enableNotifyVapor;	// Vapor Notify
+  bool enableBuzzerBattery;
+  
+  bool enableNotifyVape;	// Vape Notify
   bool enableNotifyTamper;	// Tamper Notify
   bool enableNotifyBattery;	// Battery Notify
 
@@ -66,7 +68,7 @@ class Zstate {
   void factory_reset();
   void save();
   void load();
-  char *c_str();
+  String str();
   void deepSleep();
 };
 

@@ -133,3 +133,13 @@ bool Zbackhaul::isConnected()
   return connected;
 }
 
+void Zbackhaul::off()
+{
+  #if Wiring_Cellular
+  Cellular.off();
+  #endif
+  #if Wiring_WiFi
+  WiFi.off();
+  #endif
+  
+}

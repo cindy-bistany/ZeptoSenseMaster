@@ -5,6 +5,9 @@
 #include "zbuild.h"
 #include "zstate.h"
 #include "zbackhaul.h"
+#include "zbaseboard.h"
+#include "zclock.h"
+#include "zdetector.h"
 
 Zstate zstate;
 
@@ -30,6 +33,7 @@ void Zstate::load()
   fram.get(0,*this);
   if (p.build_random_number != BUILD_RANDOM_NUMBER) {  //Check for first time the firmware runs
     factory_reset();
+    save();
   }
   else {
     debug("Not first run.\n");
@@ -40,23 +44,13 @@ void Zstate::load()
 
 void Zstate::deepSleep()
 {
-  save());
-  zbaseboard.shutdown();
+  save();
   debug("Going to sleep\n");
-  
-  if (bSleepModeStandby){
-    debug("Going to standby sleep\n");
-    bInSleepMode=true;
-    System.sleep(D8, RISING, 900, SLEEP_NETWORK_STANDBY);
-    return;
-  }
-  else{
-    debug("Going to deep sleep\n");
-    bSleepModeStandby=false;
-    bInSleepMode=true;
-    delay(2000);
-    System.sleep(SLEEP_MODE_DEEP); 
-    }
+  int sleepTime = 0;
+#if Wiring_Cellular
+  sleepTime = 900;
+#endif
+  zclock.deepSleep(sleepTime);
 }
 
 const String factory_expression = "pm1>300||pm2>300||pm4>300||pm10>300&&conc>100||temp>150";
@@ -76,35 +70,38 @@ void Zstate::factory_reset()
   p.portBlynk = 8080;
   p.portBuzzer = D7;
 
-  p.wakeupTime = p.accumulatedOnTime = p.backhaulTime = 0;
-  
-  P.stateStr = "INIT";
+  p.wakeupTime = p.accumulatedOnTime = p.backhaulOnTime = 0;
   
   p.readingCount = 0;
   p.numberOfReadings = 24;
   p.secondsBetweenReadings = 5;
   p.zeroOffset = -156;
+
   strcpy(p.expression, factory_expression);
-  strcpy(p.email, factory_email);
-  strcpy(p.batEmail, factory_batEmail);
+  strcpy(p.vapeEmail, factory_email);
+  strcpy(p.batteryEmail, factory_batEmail);
   strcpy(p.tamperEmail, factory_tamperEmail);
-  p.batThreshold = 20.0;
+  
+  p.batteryThreshold = 20.0;
   p.lastAlert = false;
   p.batLastAlert = false;
   p.activityThreshold = 100; // Which is set to 1 in Blynk
-  p.buzzerTamper = true;  // Buzzer Tamper
-  p.buzzerVapor = false; // Vapor Buzzer
-  p.notifyVapor = true; // Vapor Notify
-  p.notifyTamper = true; // Tamper Notify
-  p.notifyBattery = true; // Battery Notify
 
-  p.powerOn = p.appConnected = p.sensorValid = p.currentAlert =
-    p.terminalDebug =  p.batCurrentAlert = p.tamperCurrentAlert;
+  p.enableBuzzerTamper = true;  // Buzzer Tamper
+  p.enableBuzzerVape = false; // Vapor Buzzer
+  p.enableBuzzerBattery = false;
+  
+  p.enableNotifyVape = true; // Vapor Notify
+  p.enableNotifyTamper = true; // Tamper Notify
+  p.enableNotifyBattery = true; // Battery Notify
+
+  p.terminalDebug = false;
+  
   save();
 }
 
 
-str Zstate::str() {
+String Zstate::str() {
   //print out the state struct on the debug serial port
 }
 

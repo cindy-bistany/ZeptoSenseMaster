@@ -16,6 +16,8 @@ class Zblynk {
   
   bool isConnected();
   
+  void redAlert();
+  void greenAlert();
   void status_message(String msg);
   void debug_message(String msg);
 
@@ -23,6 +25,7 @@ class Zblynk {
  private:
   bool zblynk_connected;
 
+  //configuration
   void write_numberOfReadings(int numOfReadings);
   void write_secondsBetweenReadings(int secBetwReadings);
   void write_zeroOffset(float zo);
@@ -39,6 +42,16 @@ class Zblynk {
   void write_tamperEmail(char *email);
   void write_enterCode(char *msg);
   void write_activityThreshold(int at);
+
+  //Readings
+  void write_pm1();
+  void write_pm25();
+  void write_pm4();
+  void write_pm10();
+  void write_gas_concentration();
+  void write_tempF();
+  void write_batteryLevel();
+  void write_signalStrength();
 
 };
 

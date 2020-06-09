@@ -9,8 +9,7 @@ class Zclock {
  public:
   void setup();
   uint32_t now();
-  void on(); //WWWWWWWWWWWWWWWhat is this
-  void timerSleep(long seconds);
+  void deepSleep(long seconds = 0);
 
   void setGMTOffset(long offset);
   void setTimeZone(int tz);

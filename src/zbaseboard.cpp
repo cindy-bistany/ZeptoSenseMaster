@@ -325,5 +325,40 @@ bool Zbaseboard::power5IsOn()
 }
 
 
+//make a loop to go through the bit pattern parameter
+//each bit gets a beep
+//0 bits get one beep quantum, 1 bits get 3 beep quanta
+//1 quantum between bits
+//delete leading zeroes, replace with 6 beep quanta of quiet
+//
+//leading to morse code here eventually
+//for now beep("000111000") or (beep"...---...") will produce morse SOS
+//
+#define dot_length 100 //ms sound for a morse dot
+#define dash_length (3*dot_length)
+#define char_space dash_length
+#define word_space (7*dot_length)
+
+void Zbaseboard::beep(String s) {
+  for (int i=0; i < s.length(); i++) {
+    switch (s[i]) {
+    case '0':
+    case '.':
+      buzzer(true); delay(dot_length); buzzer(false); delay(dot_length);
+      break;
+    case '1':
+    case '-':
+      buzzer(true); delay(dash_length); buzzer(false); delay(dot_length);
+      break;
+    case ' ':
+      buzzer(false); delay(dash_length); 
+      break;
+    default:
+      break;
+    }
+  }
+  buzzer(false); //belt & suspenders
+}
+
 
 

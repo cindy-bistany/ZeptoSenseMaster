@@ -20,6 +20,7 @@ class Zbaseboard {
   int signalStrength();
 
   void buzzer(bool onoff);
+  void beep(String dotdash);
 
  private:
   void setup_expander();

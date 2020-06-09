@@ -4,11 +4,11 @@
 class Ziaq {
  public:
   void setup();
-  float concentration();
-
- private:
   int tempF();
   int tempC();
+  float gas_concentration();
+
+ private:
   float vgas();
 };
 

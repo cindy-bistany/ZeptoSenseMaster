@@ -7,27 +7,22 @@ class Zdetector {
   void clear();
   void read();
 
-  bool tamperIsOn();
+  bool tampered();
   void tamperReset();
   
   float pm1();
   float pm25();
   float pm4();
   float pm10();
-  float mass_concentration();
-  float numeric_concentration();
+  float mass_concentration(int i);
+  float numeric_concentration(int i);
   float gas_concentration();
-  float tempF();
-  float tempC();
+  int tempF();
+  int tempC();
+  int batteryLevel();
 
  private:
-  bool tampered;
-  float temperatureF;
-  float temperatureC;
-  float vgas;
-  float gas_conc;
-  float pmmass_concentration[4];
-  float pmnum_concentration[5];
+
 };
 
 extern Zdetector zdetector;

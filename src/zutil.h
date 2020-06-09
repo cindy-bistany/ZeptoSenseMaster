@@ -18,9 +18,6 @@
 #endif
 
 void crash(char *msg);
-void buzzon();
-void buzzoff();
-void beep(String s);
 void blinkpanic();
 
 #endif

@@ -25,30 +25,6 @@ void Ztamper::setup() {
 bool Ztamper::tampered() { return isRising() || isHigh() || isFalling(); }
 void Ztamper::reset() { tamperInterruptTriggered = tamperInterruptTriggered_prev = false; }
 
-void Ztamper::rise()
-{
-#ifdef Version_2
-	if (zstate.p.enableNotifyTamper == true) Blynk.logEvent("tamper_alert");
-#else
-	Blynk.email(zstate.p.tamperEmail, "{DEVICE_NAME} : Tamper alarm", "{DEVICE_NAME} tamper alarm!");
-#endif      
-  if (zstate.p.enableBuzzerTamper) buzzon();
-}
-
-void Ztamper::stayHigh()
-{
-}
-
-void Ztamper::fall()
-{
-  //  buzzoff;
-}
-
-void Ztamper::stayLow()
-{
-  //  buzzoff;
-}
-
 bool Ztamper::isRising()	{ return  tamperInterruptTriggered && !tamperInterruptTriggered_prev; }
 bool Ztamper::isHigh()		{ return  tamperInterruptTriggered &&  tamperInterruptTriggered_prev; }
 bool Ztamper::isFalling()	{ return !tamperInterruptTriggered &&  tamperInterruptTriggered_prev; }
@@ -57,12 +33,6 @@ bool Ztamper::isLow()		{ return !tamperInterruptTriggered && !tamperInterruptTri
 void Ztamper::loop()
 {
   loop_adxl345();
-  
-  if (isRising()) rise();
-  else if (isHigh()) stayHigh();
-  else if (isFalling()) fall();
-  else if (isLow()) stayLow();
-  else crash("Ztamper::loop() - Logic error\n");
 }
 
 void Ztamper::setup_adxl345()
@@ -119,9 +89,9 @@ void Ztamper::loop_adxl345()
     // Activity
     tamperInterruptTriggered = adxl.triggered(interrupts, ADXL345_ACTIVITY);
     
-    adxl.InactivityINT(1);	// Turn off Interrupts for Activity(1 == ON, 0 == OFF)
-    adxl.ActivityINT(1);
     adxlInterruptTriggered = false;
+    adxl.InactivityINT(1);	// Turn on Interrupts for Activity(1 == ON, 0 == OFF)
+    adxl.ActivityINT(1);
   }
 }
 
