@@ -104,5 +104,6 @@ void Zstate::factory_reset()
 
 String Zstate::str() {
   //print out the state struct on the debug serial port
+  return "Zstate::str() - not implemented yet";
 }
 

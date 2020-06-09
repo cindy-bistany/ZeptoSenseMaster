@@ -8,6 +8,8 @@
 const float Sf1 = 4.05; //nA/ppm replace this value with your own sensitivity
 IAQ iaqsensor(A2, A4, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RESP, O3, and SPEC (custom)
 
+Ziaq ziaq;
+
 //IAQ sensor1(C1, T1, Sf1);  //Sensor Types are EtOH, H2S, CO, IAQ, SO2, NO2, RESP, O3, and SPEC (custom)
 //O3 sensor2(C2, T2, Sf2);  //Example O3
 //H2S sensor3(C3, T3, Sf3); //Example H2S

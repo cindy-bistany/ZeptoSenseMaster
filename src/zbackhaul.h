@@ -20,6 +20,6 @@ class Zbackhaul {
   
 };
 
-Zbackhaul zbackhaul;
+extern Zbackhaul zbackhaul;
 
 #endif

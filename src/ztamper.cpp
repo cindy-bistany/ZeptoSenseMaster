@@ -17,6 +17,8 @@ static bool adxlInterruptTriggered = false;
 void ADXL_ISR() { adxlInterruptTriggered = true; }	//just set a flag
 //**********************************************
 
+Ztamper ztamper;
+
 void Ztamper::setup() {
   setup_adxl345();
   reset();

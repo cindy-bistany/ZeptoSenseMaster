@@ -8,7 +8,6 @@ class Zalerts {
   void setup();
   void clear();
   void loop();
-  int update();
   
   bool vapeAlert();
   bool batteryAlert();

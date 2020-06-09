@@ -3,8 +3,9 @@
 
 #include "application.h"
 
-#include <blynk.h>
 #include "zstate.h"
+
+#define ZBLYNKPORT 8080
 
 class Zblynk {
  public:
@@ -15,6 +16,8 @@ class Zblynk {
   void update_all_readings();
   
   bool isConnected();
+  void logEvent(char *s);
+  void config(char *auth, char *url, int port);
   
   void redAlert();
   void greenAlert();

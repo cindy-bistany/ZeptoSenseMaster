@@ -32,7 +32,7 @@ bool Zalerts::runExpression(char *expression, Zdetector *det)
   return (calc == 1.0);
 }
 
-int Zalerts::update()
+void Zalerts::loop()
 {
   vapeTrouble_prev = vapeTrouble;
   vapeTrouble = runExpression(zstate.p.expression, &zdetector);
@@ -62,7 +62,7 @@ void Zalerts::vapeAlertResponse()
     if (zstate.p.enableNotifyVape) {
       String statusMessage = "ALRT! "+ Time.format(zclock.now(),"%h%e %R") + " " + zdetector.batteryLevel() + "%";
       zblynk.status_message(statusMessage);
-      Blynk.logEvent("vape_alert");
+      zblynk.logEvent("vape_alert");
     }
     
     if (zstate.p.enableBuzzerVape) {
@@ -97,7 +97,7 @@ void Zalerts::tamperAlertResponse()
     if (zstate.p.enableNotifyTamper) {
       String statusMessage = "ALRT! "+ Time.format(zclock.now(),"%h%e %R") + " " + zdetector.batteryLevel() + "%";
       zblynk.status_message(statusMessage);
-      Blynk.logEvent("tamper_alert");
+      zblynk.logEvent("tamper_alert");
     }
     
     if (zstate.p.enableBuzzerTamper) {
@@ -136,12 +136,12 @@ void Zalerts::batteryAlertResponse()
     if (zstate.p.enableNotifyBattery) {
       String statusMessage = "ALRT! "+ Time.format(zclock.now(),"%h%e %R") + " " + zdetector.batteryLevel() + "%";
       zblynk.status_message(statusMessage);
-      Blynk.logEvent("battery_alert");
+      zblynk.logEvent("battery_alert");
     }
     
     if (zstate.p.enableBuzzerBattery) {
       long elapsed = millis() - batteryBuzzerStartTime;
-      if (elapsed > 60*60*1000100) {
+      if (elapsed > 60*60*1000) {
 	zbaseboard.buzzer(false);
 	zbaseboard.beep("...---...");
 	batteryBuzzerStartTime = millis();

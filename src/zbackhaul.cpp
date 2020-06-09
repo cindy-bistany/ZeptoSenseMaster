@@ -1,7 +1,9 @@
 #include <Particle.h>
-#include <blynk.h>
 
 #include "zbackhaul.h"
+#include "zblynk.h"
+
+Zbackhaul zbackhaul;
 
 void Zbackhaul::setup() { connect(); }
 
@@ -60,14 +62,10 @@ void Zbackhaul::connect()
   }
   debug("Particle connected\n");
 
-  if (!Blynk.connected()) {
+  if (!zblynk.isConnected()) {
     debug("Attempting to connect to Blynk...\n");
-    #ifdef Version_2
-    Blynk.config(auth, "zeptosense2.blynk.cc",portBlynk);
-    #else
-    Blynk.config(auth, "zeptosense.blynk.cc");
-    #endif
-    if (!Blynk.connected()) crash("Blynk not connected\n");
+    zblynk.config(auth, "zeptosense2.blynk.cc", ZBLYNKPORT);
+    if (!zblynk.isConnected()) crash("Blynk not connected\n");
   }
   debug("Blynk connected\n");
 }
@@ -98,10 +96,10 @@ void Zbackhaul::connectWithoutWaiting()
   }
   #endif
   else {
-    if (!Blynk.connected()) {
+    if (!zblynk.isConnected()) {
       debug("Attempting to connect to Blynk...\n");
-      Blynk.run();
-      if (!Blynk.connect())
+      zblynk.setup();
+      if (!zblynk.isConnected())
         debug("Blynk not connected\n");
     }
     else debug("Blynk connected\n");
@@ -139,7 +137,7 @@ bool Zbackhaul::isConnected()
     connected = false;
   }
   
-  if (!Blynk.connected()) {
+  if (!zblynk.isConnected()) {
     debug("Blynk not connected\n");
     connected = false;
   }

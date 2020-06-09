@@ -1,7 +1,11 @@
 // emacs -*- c++ -*-
 //zblynk - glue code between blynk and zeptive
 #include "application.h"
-#include "blynk.h"
+
+#ifndef BLYNK_H
+#include <blynk.h>
+#define BLYNK_H
+#endif
 
 //
 #include "zblynk.h"
@@ -19,6 +23,9 @@ void Zblynk::setup() {  zblynk_connected = false;   Blynk.run();  }
 
 bool Zblynk::isConnected() { return zblynk_connected;  }
 
+void Zblynk::logEvent(char *s) { Blynk.logEvent(s); }
+void Zblynk::config(char *auth, char *url, int port) { Blynk.config(auth, url, port); }
+  
 void Zblynk::status_message(String msg)		{  Blynk.virtualWrite(V30, msg);  }
 void Zblynk::debug_message(String msg)  	{  Blynk.virtualWrite(V21, msg);  }
 
@@ -112,6 +119,11 @@ void Zblynk::update()
   //Blynk.virtualWrite(V11, zstate.p.numberOfReadings);
   //Blynk.virtualWrite(V13, zstate.p.secondsBetweenReadings);
   //Blynk.virtualWrite(V15, zstate.p.zeroOff);
+}
+
+void Zblynk::update_all() {
+  update_all_state();
+  update_all_readings();
 }
 
 // Update app connection state
