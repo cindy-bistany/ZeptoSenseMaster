@@ -20,7 +20,13 @@ void buzzoff() { digitalWrite(BUZZER, LOW); }
 
 void crash(char *msg)
 {
-  zblynk.debug_message(String("System resetting with condition %s\n") + msg);
+  zblynk.debug_message(String("System crash: ") + msg + "\n");
+  System.reset();
+}
+
+void reboot(char *msg)
+{
+  zblynk.debug_message(String("System reboot: ") + msg + "\n");
   System.reset();
 }
 

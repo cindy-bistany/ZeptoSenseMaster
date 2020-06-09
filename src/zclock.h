@@ -10,6 +10,7 @@ class Zclock {
   void setup();
   uint32_t now();
   void on(); //WWWWWWWWWWWWWWWhat is this
+  void timerSleep(long seconds);
 
   void setGMTOffset(long offset);
   void setTimeZone(int tz);
@@ -21,8 +22,9 @@ class Zclock {
   int gmtOffsetSeconds;
   bool gmtOffsetValid;
   bool timeIsSynchronized;	//to what?
+  
   void publishGMTOffsetRequest();
-
+  
 };
 
 extern Zclock zclock;

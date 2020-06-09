@@ -3,9 +3,10 @@
 #ifndef ZBASEBOARD_H
 #define ZBASEBOARD_H
 
+#include <IoTNodePower.h>
 #include "zstate.h"
 
-class Baseboard {
+class Zbaseboard {
  public:
   void setup();
   void shutdown();
@@ -27,5 +28,7 @@ class Baseboard {
   bool v5IsOn;
   bool v3IsOn;
 };
+
+extern Zbaseboard zbaseboard;
 
 #endif

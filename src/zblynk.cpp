@@ -6,16 +6,15 @@
 
 Zblynk zblynk;
 
-void Zblynk::setup() {  zblynk_connected = false; }
+void Zblynk::setup() {  zblynk_connected = false;   Blynk.run();  }
 
 bool Zblynk::isConnected() { return zblynk_connected;  }
 
-void Zblynk::status_message(string msg) {  Blynk.virtualWrite(V30, msg);  }
-void Zblynk::debug_message(string msg)  {  Blynk.virtualWrite(V21, msg);  }
+void Zblynk::update_numberOfReadings(int numOfReadings)		{  Blynk.virtualWrite(V10, numOfReadings);	Blynk.virtualWrite(V11, numOfReadings);  }
+void Zblynk::update_secondsBetweenReadings(int secBetwReadings) {  Blynk.virtualWrite(V12, secBetwReadings);	Blynk.virtualWrite(V13, secBetwReadings);  }
 
-void Zblynk::update_numberOfReadings(int numOfReadings)		{  Blynk.virtualWrite(V10, numOfReadings);  Blynk.virtualWrite(V11, numOfReadings);  }
-void Zblynk::update_secondsBetweenReadings(int secBetwReadings) {  Blynk.virtualWrite(V12, secBetwReadings);  Blynk.virtualWrite(V13, secBetwReadings);  }
-
+void Zblynk::status_message(string msg)		{  Blynk.virtualWrite(V30, msg);  }
+void Zblynk::debug_message(string msg)  	{  Blynk.virtualWrite(V21, msg);  }
 void Zblynk::update_zeroOffset(float zo)	{  Blynk.virtualWrite(V15, zo);  }
 void Zblynk::update_expression(char *expr)	{  Blynk.virtualWrite(V20, expr);  }
 void Zblynk::update_batteryThreshold(float thr)	{  Blynk.virtualWrite(V25, thr);  }

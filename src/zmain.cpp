@@ -5,16 +5,19 @@
 #include "zstate.h"
 #include "zbaseboard.h"
 
-//ideally:
-ZState currentState;
-Baseboard board;
-
 setup()
 {
   //just waking up from power off
   unsigned long wakeupTime = millis();	//note what time we woke up
+
+  zstate.setup();
+  zstate.p.wakeuptime = wakeuptime;
+  zbaseboard.setup();
+  zdetector.setup();
+  zalerts.setup();
+  zbackhaul.setup();
+
   
-  board.setup();
 
   currentState.load();		//restore prev or init new state
   currentState.wakeupTime = wakeupTime;	//note the original wake up time.
@@ -40,6 +43,8 @@ loop()
       break;
     }
     case WAKEUP_REASON_RTC: {
+      //this looks like the "light sleep" wakeup
+      //the cell modem has been on, but we have timed out sleeping, so safe to turn it off.
       debug("Device was woken up by the Particle RTC (after 15 minutes), go into Deep Sleep\n");
       state.bSleepModeStandby=false;
       // Delay here in loop is okay because we are about to sleep
@@ -53,7 +58,6 @@ loop()
     }
   }
 
-  Blynk.run();
   // Note the use of timers in the loop per Blynk best practice
   sensorTimer.run(); // BlynkTimer is working...
   accelTimer.run();
@@ -66,8 +70,6 @@ loop()
     deepSleep();
   }
 }
-
-#include "MCP7941x.h"
 
 
 //***************** INTERRUPT ******************
@@ -140,54 +142,4 @@ bool tamperAlertChanged(Zstate *st)
   st->tamperLastAlert = tamperCurrentAlert;
   saveState(st);
   return true;
-}
-
-void timerSleep(long seconds)
-{
-  String statusMessage;
-  StateString = "STBY";
-  statusMessage = timeSynced ?
-    StateString + " " + Time.format(rtc.rtcNow() + gmtOffsetSeconds,"%h%e %R") + " " + field7 + "%"
-    : StateString + "                " + field7 + "%";
-  Blynk.virtualWrite(V30,statusMessage);
-  setAlarm(seconds);
-  activateAlarmPowerdown();
-  delay(200);  
-}
-
-
-void setAlarm(int DURATION)
-{
-    rtc.disableAlarm0();
-    int rtcnow = rtc.rtcNow();
-    debug(rtcnow + "\n");
-    int alarmTime = rtcnow + DURATION;
-    String mess = String(Time.format(rtcnow, TIME_FORMAT_ISO8601_FULL))+" + "+String(DURATION)+" = "+String(Time.format(alarmTime, TIME_FORMAT_ISO8601_FULL))+"\r\n";
-    debug(mess);
-    if (terminalDebug) Blynk.virtualWrite(V21, mess);
-    rtc.setAlarm0UnixTime(alarmTime);
-}
-
-void initializeAlarm()
-{
-  debug("Initializing alarm\n");
-  rtc.outHigh();
-  rtc.disableAlarms();
-  rtc.maskAlarm0("Seconds");
-  rtc.setAlarm0PolHigh();
-  rtc.clearIntAlarm0();
-}
-
-void activateAlarmPowerdown()
-{
-    // Clear the alarm0 interrupt
-    rtc.clearIntAlarm0();
- 
-    // Enable the alarm. This will set the MFP output low
-    // turning off the power until the alarm triggers
-    // turning on the power again and starting the code from
-    // the beginning.
-    rtc.enableAlarm0();
- rtc.publishAlarm0Debug();
-    
 }

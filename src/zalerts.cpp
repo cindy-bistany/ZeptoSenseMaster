@@ -1,6 +1,10 @@
-#include "zalerts.h"
+#include <tinyexpr.h>
 
-Zakerts zalerts;
+#include "zalerts.h"
+#include "zstate.h"
+#include "zbaseboard.h"
+
+Zalerts zalerts;
 
 void Zalerts::clear() {  vapeTrouble = batteryTrouble = tamperTrouble = false;  }
 void Zalerts::setup() { clear(); }
@@ -25,13 +29,13 @@ bool Zalerts::runExpression(char *expression, Zdetector *det)
   return (calc == 1.0);
 }
 
-bool vapeAlert()	{ return vapeTrouble; }
-bool batteryAlert()	{ return batteryTrouble; }
-bool tamperAlert()	{ return tamperTrouble; }
+bool Zalerts::vapeAlert()	{ return vapeTrouble; }
+bool Zalerts::batteryAlert()	{ return batteryTrouble; }
+bool Zalerts::tamperAlert()	{ return tamperTrouble; }
 
 int Zalerts::update()
 {
   vapeTrouble = runExpression(zstate.p.expression, &zdetector);
-  batteryTrouble = (zdatector.batteryLevel() < zstate.pp.batteryThreshold);
-  tampTrouble = zdetector.tampered();
+  batteryTrouble = (zbaseboard.batteryLevel() < zstate.p.batteryThreshold);
+  tamperTrouble = zdetector.tamperIsOn();
 }

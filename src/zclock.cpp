@@ -5,6 +5,8 @@
 #include "zbuild.h"
 #include "zutil.h"
 #include "zclock.h"
+#include "zbaseboard.h"
+#include "zblynk.h"
 
 // Create new instance of RTC class:
 // Use to hard power cycle the device to reset I2C
@@ -69,25 +71,47 @@ String Zclock::timeZoneName()
 {
   String zone;
   switch (zclock.getTimeZone()) {
-  case 0:
-    zone = "America/New_York";
-    break;
-  case 1:
-    zone = "America/Chicago";
-    break;
-  case 2:
-    zone = "America/Phoenix";
-    break;
-  case 3:
-    zone = "America/Los_Angeles";
-    break;
-  default:
-    zone = "America/New_York";
-    break;
+  case 0:    zone = "America/New_York";    break;
+  case 1:    zone = "America/Chicago";    break;
+  case 2:    zone = "America/Phoenix";    break;
+  case 3:    zone = "America/Los_Angeles";    break;
+  default:   zone = "America/New_York";    break;
   }
   return zone;
 }
 
 
+void Zclock::timerSleep(long seconds)
+{
+  String msg =  String(Time.format(now(), "%h%e %R")) + " " + zbaseboard.batteryLevel() + "%";
+  zblynk.status_message(msg);
 
+  int alarmTime = rtc.rtcNow() + seconds;
+  rtc.disableAlarm0();
+  rtc.setAlarm0UnixTime(alarmTime);
+  rtc.clearIntAlarm0();
+ 
+  // Enable the alarm. This will set the MFP output low
+  // turning off the power until the alarm triggers
+  // turning on the power again and starting the code from
+  // the beginning.
+  rtc.enableAlarm0();
+  rtc.publishAlarm0Debug();
+
+  delay(200);  
+}
+
+/*
+this was never called in the original code
+
+void initializeAlarm()
+{
+  debug("Initializing alarm\n");
+  rtc.outHigh();
+  rtc.disableAlarms();
+  rtc.maskAlarm0("Seconds");
+  rtc.setAlarm0PolHigh();
+  rtc.clearIntAlarm0();
+}
+*/
 

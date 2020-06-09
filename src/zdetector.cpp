@@ -9,6 +9,7 @@
 #include "zpmcounter.h"
 #include "ziaq.h"
 #include "ztamper.h"
+#include "zblynk.h"
 
 Zdetector zdetector;
 
@@ -25,16 +26,10 @@ void readings_get()
   zdetector.read();
   zblynk.update_all_readings();
 
-  sensorValid = true;
     String statusMessage;
     String alertMessage;
     // Check to see if there is an alert state and act on it
     if (runExpression(state.expression))     {
-      currentAlert = true;
-      zblynk.greenAlert();
-      zblynk.redAlert();
-      //Blynk.virtualWrite(V9,alertGreenImage);
-      //Blynk.virtualWrite(V9,alertRedImage);
       
       if (st->timeSynced) statusMessage = "ALRT! "+ Time.format(rtc.rtcNow()+gmtOffsetSeconds,"%h%e %R") + " " + zdetector.batteryLevel() +"%";
       else statusMessage = "ALERT!             "+ zdetector.batteryLevel() +"%";
@@ -64,8 +59,7 @@ void readings_get()
       if (st->terminalDebug) Blynk.virtualWrite(V21, Time.timeStr()+"|"+String(gmtOffsetSeconds));
       currentAlert = false;
     }
-     if (VapeBuzzerOn)
-     {
+     if (VapeBuzzerOn) {
          //Turn Buzzer Off if timer expired
          unsigned long vape_elapsed_buzzer =  millis() - VapeAlertBuzzerTime;
   	 alertMessage=String::format("buzzer total time %ul ****", vape_elapsed_buzzer);
@@ -79,13 +73,13 @@ void readings_get()
     if (alertChanged()) {
       if (currentAlert) {
           
-        if (state.buzzerVapor==true) {
+        if (state.buzzerVapor == true) {
             //Buzzer On
             digitalWrite(buzzer, HIGH);
             VapeAlertBuzzerTime = millis();
             alertMessage=String::format("Vape alert buzzer time reset at %ul ****", VapeAlertBuzzerTime);
             debug(alertMessage + "\n");
-	          VapeBuzzerOn=true;
+	    VapeBuzzerOn=true;
             //delay(8000);
         }
         if (state.notifyVapor==true) {
@@ -97,26 +91,20 @@ void readings_get()
           #endif
         }
       }
-      else
-      {
+      else {
        unsigned long elapsed = millis() - VapeAlertTime;
-  	   alertMessage=String::format("Vape Alert total time %ul milliseconds", elapsed/10);
+       alertMessage=String::format("Vape Alert total time %ul milliseconds", elapsed/10);
        debug(alertMessage + "\n");
-       if (state.notifyVapor==true)
-        {
-          #ifdef Version_2
-          //Blynk.logEvent("vape_alarm_ended");
-          //Particle.publish("Vape Alert",alertMessage,PRIVATE);
-          #else
-          Blynk.email(state.email, "{DEVICE_NAME} : Alarm ended", "{DEVICE_NAME} alarm ended.");
-          #endif
-        }
+       if (state.notifyVapor==true) {
+#ifdef Version_2
+	 //Blynk.logEvent("vape_alarm_ended");
+	 //Particle.publish("Vape Alert",alertMessage,PRIVATE);
+#else
+	 Blynk.email(state.email, "{DEVICE_NAME} : Alarm ended", "{DEVICE_NAME} alarm ended.");
+#endif
+       }
       }
-      
     }
-
-    if (batCharge<state.batThreshold) batCurrentAlert = true;
-    else batCurrentAlert = false;
 
     if (batAlertChanged()) {
       if (batCurrentAlert) {

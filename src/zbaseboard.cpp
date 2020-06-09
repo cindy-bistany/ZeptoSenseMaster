@@ -1,11 +1,12 @@
 // emacs -*- c++ -*-
 #include <math.h>
-#include <IoTNodePower.h>
 
 #include "zstate.h"
 #include "zutil.h"
 #include "zclock.h"
 #include "zbaseboard.h"
+
+Zbaseboard zbaseboard;
 
 //IoTNodePower boardPower;
 
@@ -16,12 +17,8 @@
 // a device did acknowledge to the address.
 //
 /*
-Baseboard::Baseboard()
-{
-}
-*/
-
-void Baseboard::setup_expander()
+ */
+void Zbaseboard::setup_expander()
 {
   const byte MCP23017_ADDRESS = 0x20;
   byte expanderaddress = MCP23017_ADDRESS;
@@ -155,7 +152,7 @@ void scanI2C()
     debug("done\n");
 }
 
-void Baseboard::setup_i2c()
+void Zbaseboard::setup_i2c()
 {
   debug("Checking i2c devices...\n");
   bool i2cOK = checkI2CDevices(i2cNames, i2cAddr, i2cLength, i2cExists);
@@ -193,7 +190,7 @@ void Baseboard::setup_i2c()
 //bring up the baseboard, but be sure all other power is turned off.
 //
 #define BUZZER D7
-void Baseboard::setup()
+void Zbaseboard::setup()
 {
   beep("---");
   
@@ -227,7 +224,7 @@ void Baseboard::setup()
 //
 // Battery functions
 //
-bool Baseboard::batteryIsCharged()
+bool Zbaseboard::batteryIsCharged()
 {
   beep("...---...");
   return false;
@@ -235,7 +232,7 @@ bool Baseboard::batteryIsCharged()
 
 FuelGauge fuel;
 
-float Baseboard::batteryLevel()
+float Zbaseboard::batteryLevel()
 {
 #if Wiring_Cellular
   return fuel.getSoC();
@@ -253,7 +250,7 @@ float Baseboard::batteryLevel()
 //////////////
 
 
-int Baseboard::signalStrength()
+int Zbaseboard::signalStrength()
 {
 #if Wiring_Cellular
     CellularSignal sig = Cellular.RSSI();
@@ -266,12 +263,12 @@ int Baseboard::signalStrength()
 #endif
 }
 
-void Baseboard::buzzer(bool onoff)
+void Zbaseboard::buzzer(bool onoff)
 {
   digitalWrite(BUZZER, onoff);
 }
 
-void Baseboard::shutdown()
+void Zbaseboard::shutdown()
 {
   /*  st->stateStr = "STBY";
   unsigned long elapsed = millis() - st->wakeuptime;
@@ -305,24 +302,24 @@ void Baseboard::shutdown()
   #endif  
 }
 
-void Baseboard::power3(bool onoff)
+void Zbaseboard::power3(bool onoff)
 {
   boardPower.setPowerON(EXT3V3, onoff);
   v3IsOn = onoff;
 }
 
-void Baseboard::power5(bool onoff)
+void Zbaseboard::power5(bool onoff)
 {
   boardPower.setPowerON(EXT5V, onoff);
   v5IsOn = onoff;
 }
 
-bool Baseboard::power3IsOn()
+bool Zbaseboard::power3IsOn()
 {
   return v3IsOn;
 }
 
-bool Baseboard::power5IsOn()
+bool Zbaseboard::power5IsOn()
 {
   return v5IsOn;
 }

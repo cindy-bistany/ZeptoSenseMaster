@@ -25,8 +25,6 @@ typedef struct Zstate_persistent { //struct for easy storage to FRAM
   uint16_t portBlynk;	//probably should be hived off into blynk
   int portBuzzer;	//documented as D7, but what is D7?, maybe hive off into baseboard code
 
-  char stateStr[64];
-  
   int readingCount;	//some type of averaging I think
   int numberOfReadings; //something to do with tracking the readings while looping
   int secondsBetweenReadings;
@@ -34,7 +32,7 @@ typedef struct Zstate_persistent { //struct for easy storage to FRAM
   float zeroOffset;	//something for one of the sensors
 
   int activityThreshold;  // accelerometer 62.5mg per increment-activity thresholds (0-255) 36,72,100 or 144
-  float batThreshold;  //something to do with charging the battery in the 2-layer battery arch
+  float batteryThreshold;  //something to do with charging the battery in the 2-layer battery arch
   
   char expression[256];  //must be the test expression for raining alerts
   char email[256];  //main email for alerts I think
@@ -46,14 +44,11 @@ typedef struct Zstate_persistent { //struct for easy storage to FRAM
   bool tamperLastAlert;  //last tamper alert, but so what?
  //bool buzzerActivated;
 
-  //No sure how these have anything to do with pins.  certainly not here.
-  //maybe these enable the respective alerts?
-  /****************** New Blync Pins ******************/
-  bool buzzerTamper; // Buzzer Tamper
-  bool buzzerVapor; // Vapor Buzzer
-  bool notifyVapor; // Vapor Notify
-  bool notifyTamper; // Tamper Notify
-  bool notifyBattery; // Battery Notify
+  bool enableBuzzerTamper;	// Buzzer Tamper
+  bool enableBuzzerVapor;	// Vapor Buzzer
+  bool enableNotifyVapor;	// Vapor Notify
+  bool enableNotifyTamper;	// Tamper Notify
+  bool enableNotifyBattery;	// Battery Notify
 
   //Telcos don't like constant re/dis/connecting, and shut you off when it happens
   //This must be used to sleep for a while but keeping the phone on.

@@ -13,7 +13,7 @@ Zstate zstate;
 MB85RC256V fram(Wire, 0);
 
 void Zstate::setup() {
-  factory_reset();
+  load();
 }
 
 void Zstate::save()
@@ -30,7 +30,6 @@ void Zstate::load()
   fram.get(0,*this);
   if (p.build_random_number != BUILD_RANDOM_NUMBER) {  //Check for first time the firmware runs
     factory_reset();
-    backhaul.connect();
   }
   else {
     debug("Not first run.\n");

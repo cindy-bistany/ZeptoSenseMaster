@@ -6,8 +6,9 @@
 #include "zstate.h"
 #include "zauth.h"
 
-class Backhaul {
+class Zbackhaul {
  public:
+  void setup();
   void connect();
   void connectWithoutWaiting();
   bool isConnected();
@@ -16,6 +17,6 @@ class Backhaul {
   
 };
 
-Backhaul backhaul;
+Zbackhaul zbackhaul;
 
 #endif

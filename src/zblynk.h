@@ -11,7 +11,9 @@ class Zblynk {
   void setup();
   void update();
   void update_all();
-
+  void update_all_state();
+  void update_all_readings();
+  
   bool isConnected();
   
   void status_message(String msg);

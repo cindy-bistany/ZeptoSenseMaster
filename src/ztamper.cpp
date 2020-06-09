@@ -28,11 +28,11 @@ void Ztamper::reset() { tamperInterruptTriggered = tamperInterruptTriggered_prev
 void Ztamper::rise()
 {
 #ifdef Version_2
-	if (zstate.p.notifyTamper == true) Blynk.logEvent("tamper_alert");
+	if (zstate.p.enableNotifyTamper == true) Blynk.logEvent("tamper_alert");
 #else
 	Blynk.email(zstate.p.tamperEmail, "{DEVICE_NAME} : Tamper alarm", "{DEVICE_NAME} tamper alarm!");
 #endif      
-  if (zstate.p.buzzerTamper) buzzon();
+  if (zstate.p.enableBuzzerTamper) buzzon();
 }
 
 void Ztamper::stayHigh()
