@@ -18,8 +18,7 @@ class Zbackhaul {
   void shutdown();
 
  private:
-  void connect();
-  void connectWithoutWaiting();
+  void connect(bool blocking);
   
 };
 

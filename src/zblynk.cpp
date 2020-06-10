@@ -11,6 +11,7 @@
 #include "zblynk.h"
 #include "zdetector.h"
 #include "zbackhaul.h"
+#include "zbaseboard.h"
 #include "ziaq.h"
 #include "zclock.h"
 
@@ -19,12 +20,18 @@
 
 Zblynk zblynk;
 
-void Zblynk::setup() {  zblynk_connected = false;   Blynk.run();  }
+void Zblynk::setup()
+{
+  Blynk.config(auth, "zeptosense2.blynk.cc", ZBLYNKPORT);
+  Blynk.run();
+  Blynk.connect();
+  zbaseboard.morse("Z3");
+  zbaseboard.morse("ZOUT");
+}
 
-bool Zblynk::isConnected() { return zblynk_connected;  }
+bool Zblynk::isConnected() { return Blynk.connected();  }
 
 void Zblynk::logEvent(char *s) { Blynk.logEvent(s); }
-void Zblynk::config(char *auth, char *url, int port) { Blynk.config(auth, url, port); }
   
 void Zblynk::status_message(String msg)		{  Blynk.virtualWrite(V30, msg);  }
 void Zblynk::debug_message(String msg)  	{  Blynk.virtualWrite(V21, msg);  }
@@ -128,14 +135,12 @@ void Zblynk::update_all() {
 
 // Update app connection state
 BLYNK_APP_CONNECTED() {
-  zblynk.zblynk_connected = true;
   zblynk.update_all();
   debug("Connected\n");
 }
 
 BLYNK_APP_DISCONNECTED() {
   // Your code here
-  zblynk.zblynk_connected = false;
   debug("Disconnected\n");
 }
 

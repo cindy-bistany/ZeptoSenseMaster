@@ -27,7 +27,7 @@ void setup()
   zstate.setup();
   zstate.p.wakeupTime = wakeupTime;
   zbaseboard.setup();
-  zbaseboard.morse("BB OK");
+  zbaseboard.morse("OK");
   zbackhaul.setup();
   zbaseboard.morse("BH OK");
   zdetector.setup();

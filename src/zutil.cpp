@@ -21,9 +21,9 @@ LEDStatus blinkRed(RGB_COLOR_RED, LED_PATTERN_BLINK, LED_SPEED_NORMAL, LED_PRIOR
 
 void panic(char *msg)
 {
-  System.reset();
+  // System.reset();
   zblynk.debug_message(String("System panic: ") + msg + "\n");
-  zbaseboard.beep("..............");
+  zbaseboard.beep("........");
   blinkRed.setActive(true);
   delay(3000);
   blinkRed.setActive(false);
@@ -32,7 +32,9 @@ void panic(char *msg)
   blinkYellow.setActive(false);
   blinkRed.setActive(true);
   delay(3000);
-  System.reset();
+  //System.reset();
+  while (true)
+    ;
 }
 
 
