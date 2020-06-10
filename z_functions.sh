@@ -81,3 +81,9 @@ function z_backup() {
     )
 }
 
+#
+#get a fresh copy from the repo
+#
+function z_clone() {
+    git clone https://github.com/cindy-bistany/ZeptoSenseMaster
+}
