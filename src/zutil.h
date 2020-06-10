@@ -18,6 +18,7 @@
 #endif
 
 void crash(char *msg);
-void blinkpanic();
+void reboot(char *msg);
+void panic(char *msg);
 
 #endif

@@ -1,5 +1,6 @@
 #include <Particle.h>
 
+#include "zbaseboard.h"
 #include "zbackhaul.h"
 #include "zblynk.h"
 
@@ -57,22 +58,31 @@ void Zbackhaul::connect()
   debug("WiFi ready\n");
 #endif  
 
-  if (!networkReady) crash("No network available.");
+  if (!networkReady) {
+    zbaseboard.morse("NOK NOK");
+    panic("No network available.");
+  }
+  zbaseboard.morse("network ok");
   
   if (!Particle.connected()) {
     debug("Attempting to connect to Particle...\n");
     Particle.connect();
     waitFor(Particle.connected,60000);
-    if (!Particle.connected()) crash("Particle not connected\n");
+    if (!Particle.connected()) panic("Particle not connected\n");
   }
   debug("Particle connected\n");
-
+  zbaseboard.morse("particle ok");
+  
   if (!zblynk.isConnected()) {
     debug("Attempting to connect to Blynk...\n");
     zblynk.config(auth, "zeptosense2.blynk.cc", ZBLYNKPORT);
-    if (!zblynk.isConnected()) crash("Blynk not connected\n");
+    if (!zblynk.isConnected()) {
+      zbaseboard.morse("blynk nok");
+      panic("Blynk not connected\n");
+    }
   }
   debug("Blynk connected\n");
+  zbaseboard.morse("blynk ok");
 }
 
 void Zbackhaul::connectWithoutWaiting()
