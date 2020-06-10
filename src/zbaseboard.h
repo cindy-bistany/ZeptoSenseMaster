@@ -15,7 +15,6 @@ class Zbaseboard {
   void power5(bool onoff);
   bool power3IsOn();
   bool power5IsOn();
-  bool batteryIsCharged();
   float batteryLevel();
 
   void buzzer(bool onoff);

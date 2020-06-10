@@ -23,9 +23,6 @@ typedef struct Zstate_persistent { //struct for easy storage to FRAM
   
   unsigned long wakeupTime, accumulatedOnTime, backhaulOnTime;
 
-  uint16_t portBlynk;	//probably should be hived off into blynk
-  int portBuzzer;	//documented as D7, but what is D7?, maybe hive off into baseboard code
-
   int readingCount;	//some type of averaging I think
   int numberOfReadings; //something to do with tracking the readings while looping
   int secondsBetweenReadings;
@@ -40,11 +37,6 @@ typedef struct Zstate_persistent { //struct for easy storage to FRAM
   char batteryEmail[256];  //email for battery alerts
   char tamperEmail[256];  //email for tamper alerts
   
-  bool lastAlert;  //guessing this is last vape alert
-  bool batLastAlert;  //last battery alert, but so what?
-  bool tamperLastAlert;  //last tamper alert, but so what?
- //bool buzzerActivated;
-
   bool enableBuzzerVape;	// Vape Buzzer
   bool enableBuzzerTamper;	// Buzzer Tamper
   bool enableBuzzerBattery;
@@ -64,7 +56,7 @@ class Zstate {
   void save();
   void load();
   String str();
-  void deepSleep();
+  void sleep();
 };
 
 /*

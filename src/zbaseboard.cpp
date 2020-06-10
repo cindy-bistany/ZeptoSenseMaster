@@ -5,6 +5,7 @@
 #include "zutil.h"
 #include "zclock.h"
 #include "zbaseboard.h"
+#include "zbackhaul.h"
 
 Zbaseboard zbaseboard;
 
@@ -86,8 +87,7 @@ bool checkI2CDevices(String i2cNames[], byte i2cAddr[], size_t i2cLength, bool i
 {
   byte error, address;
   bool result = true;
-  for (size_t i=0; i<i2cLength; ++i)
-  {
+  for (size_t i=0; i<i2cLength; ++i) {
     // The i2c_scanner uses the return value of
     // the Write.endTransmisstion to see if
     // a device did acknowledge to the address.
@@ -95,8 +95,7 @@ bool checkI2CDevices(String i2cNames[], byte i2cAddr[], size_t i2cLength, bool i
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
 
-    if (!error==0)
-    {
+    if (!error==0) {
       Wire.reset();
       Wire.beginTransmission(address);
       error = Wire.endTransmission();
@@ -125,31 +124,28 @@ void scanI2C()
  
   debug("Scanning...\n");
   nDevices = 0;
-  for(address = 1; address < 127; address++ )
-  {
+  for(address = 1; address < 127; address++ ) {
     // The i2c_scanner uses the return value of
     // the Write.endTransmisstion to see if
     // a device did acknowledge to the address.
     Wire.beginTransmission(address);
     error = Wire.endTransmission();
  
-    if (error == 0)
-    {
+    if (error == 0) {
       printI2C(address);
       nDevices++;
     }
-    else if (error==4)
-    {
+    else if (error==4) {
       debug("Unknown error at address 0x");
       if (address<16)
         debug("0");
       debug(String(address,HEX) + "\n");
     }    
+
   }
-  if (nDevices == 0)
-    debug("No I2C devices found\n");
-  else
-    debug("done\n");
+  
+  if (nDevices == 0) debug("No I2C devices found\n");
+  else debug("done\n");
 }
 
 void Zbaseboard::setup_i2c()
@@ -217,42 +213,6 @@ void Zbaseboard::setup()
   v3IsOn = v5IsOn = true;
   
   setup_i2c();
-  //setup_clock(st);
-
-}
-
-//
-// Battery functions
-//
-bool Zbaseboard::batteryIsCharged()
-{
-  beep("...---...");
-  return false;
-}
-
-FuelGauge fuel;
-
-float Zbaseboard::batteryLevel()
-{
-#if Wiring_Cellular
-  return fuel.getSoC();
-#endif
-
-#if Wiring_WiFi
-  float voltage = analogRead(BATT) * 0.0011224;
-  float batCharge = exp(5.0601*voltage)*0.0000001;
-  if (batCharge>100) batCharge = 100;
-  return batCharge;
-#endif
-  beep("...---...  ...---...");
-  return -1;
-}
-//////////////
-
-
-void Zbaseboard::buzzer(bool onoff)
-{
-  digitalWrite(BUZZER, onoff);
 }
 
 void Zbaseboard::shutdown()
@@ -272,21 +232,6 @@ void Zbaseboard::shutdown()
   power3(false);
   power5(false);
   if (!Wire.isEnabled()) Wire.end();  // Release I2C bus for expander
-
-  debug("Going to sleep\n");
-  
-  #if Wiring_Cellular
-  if (!st->bSleepModeStandby) Cellular.off();
-  #endif
-  
-  #if Wiring_WiFi
-  WiFi.off();
-  // For wifi FORCE DEEPSLEEP no stanby
-  /*
-  st->bSleepModeStandby=false;
-  st->bInSleepMode=false;
-  */
-  #endif  
 }
 
 void Zbaseboard::power3(bool onoff)
@@ -301,22 +246,19 @@ void Zbaseboard::power5(bool onoff)
   v5IsOn = onoff;
 }
 
-bool Zbaseboard::power3IsOn()
-{
-  return v3IsOn;
-}
-
-bool Zbaseboard::power5IsOn()
-{
-  return v5IsOn;
-}
+bool Zbaseboard::power3IsOn() {  return v3IsOn;  }
+bool Zbaseboard::power5IsOn() {  return v5IsOn;  }
+float Zbaseboard::batteryLevel()	{ zbackhaul.batteryLevel(); }
+void Zbaseboard::buzzer(bool onoff)	{ digitalWrite(BUZZER, onoff);  }
 
 
-//make a loop to go through the bit pattern parameter
-//each bit gets a beep
-//0 bits get one beep quantum, 1 bits get 3 beep quanta
-//1 quantum between bits
-//delete leading zeroes, replace with 6 beep quanta of quiet
+//Beep using Morse dots and dashes
+//Make a loop to go through the bit pattern parameter
+//Each bit gets a beep
+//0 or . get one "dot" beep
+//1 or - get 1 "dash" beep = 3 dot times
+//' ' spaces get 1 dash quiet time
+//There is 1 dot quiet time between dots or dashes
 //
 //leading to morse code here eventually
 //for now beep("000111000") or (beep"...---...") will produce morse SOS

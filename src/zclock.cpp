@@ -31,13 +31,13 @@ void gmtOffsetHandler(const char *event, const char *data) {
 }
 ///
 
-void Zclock::deepSleep(long seconds)
+void Zclock::sleep(long seconds)
 {
   //seconds is the keepalive time for the cell modem
   if (seconds > 0) System.sleep(D8, RISING, seconds, SLEEP_NETWORK_STANDBY);
   else {
     zbaseboard.shutdown();
-    zbackhaul.off();
+    zbackhaul.shutdown();
     System.sleep(SLEEP_MODE_DEEP);
   }
 }
@@ -51,7 +51,7 @@ void Zclock::setup()
   switch (result.reason()) {
   case WAKEUP_REASON_NONE:       break;
   case WAKEUP_REASON_PIN:        break;
-  case WAKEUP_REASON_RTC:        deepSleep(0); break;
+  case WAKEUP_REASON_RTC:        sleep(0); break;
   case WAKEUP_REASON_PIN_OR_RTC: break;
   default: break;
   }

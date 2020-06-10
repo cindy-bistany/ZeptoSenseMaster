@@ -19,6 +19,7 @@ void Zdetector::setup()
   ziaq.setup();
   zpmcounter.setup();
   ztamper.setup();
+  read();
 }
 
 
@@ -36,7 +37,10 @@ void Zdetector::read()
       ztamper.loop();
       delay(100);
     }
+  lastReadTime = millis();
 }
+
+unsigned long Zdetector::lastReadingTime() { return lastReadTime; }
 
 float Zdetector::pm1()  { return zpmcounter.mass_concentration(0); }
 float Zdetector::pm25() { return zpmcounter.mass_concentration(1); }

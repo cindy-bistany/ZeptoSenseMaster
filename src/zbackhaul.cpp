@@ -3,23 +3,28 @@
 #include "zbackhaul.h"
 #include "zblynk.h"
 
+#define BACKHAUL_IS_WIFI true
+#define BACKHAUL_IS_CELL false
+
 Zbackhaul zbackhaul;
 
 void Zbackhaul::setup() { connect(); }
 
 int Zbackhaul::signalStrength()
 {
-#if Wiring_Cellular
+#if BACKHAUL_IS_CELL
     CellularSignal sig = Cellular.RSSI();
     return int(100*sig.qual/49);
 #endif
 
-#if Wiring_WiFi
+#if BACKHAUL_IS_WIFI
     WiFiSignal sig = WiFi.RSSI();
     return int(sig.getQuality());
 #endif
 }
 
+bool Zbackhaul::isWifi()  {  return BACKHAUL_IS_WIFI;  }
+bool Zbackhaul::isCellular() { return BACKHAUL_IS_WIFI; }
 
 // Adding explicit connect routine that has to work before the rest of the code runs
 void Zbackhaul::connect()
@@ -27,7 +32,7 @@ void Zbackhaul::connect()
   bool networkReady = false;
   
   //###### CELLULAR ######
-  #if Wiring_Cellular
+#if BACKHAUL_IS_CELL
   if (!Cellular.ready()) {
     debug("Attempting to connect cellular...\n");
     Cellular.on();
@@ -37,10 +42,10 @@ void Zbackhaul::connect()
   }
   networkReady = Cellular.ready();
   debug("Cellular is ready\n");
-  #endif
+#endif
 
   //##### WIFI  #####
-  #if Wiring_WiFi
+#if BACKHAUL_IS_WIFI
   if (!WiFi.ready()) {
     debug("Attempting to connect WiFi...\n");
     WiFi.on();
@@ -50,7 +55,7 @@ void Zbackhaul::connect()
   }
   networkReady = WiFi.ready();
   debug("WiFi ready\n");
-  #endif  
+#endif  
 
   if (!networkReady) crash("No network available.");
   
@@ -74,7 +79,7 @@ void Zbackhaul::connectWithoutWaiting()
 {
   bool networkReady = false;
   
-  #if Wiring_Cellular
+  #if BACKHAUL_IS_CELL
   if (!Cellular.ready) {
     debug("Cellular not ready\n");
     if (!Cellular.connecting()) {
@@ -85,7 +90,7 @@ void Zbackhaul::connectWithoutWaiting()
   }
   #endif
   
-  #if Wiring_WiFi
+  #if BACKHAUL_IS_WIFI
   if (!WiFi.ready()) {
     debug("WiFi not ready\n");
     if (!WiFi.connecting()) {
@@ -118,14 +123,14 @@ void Zbackhaul::connectWithoutWaiting()
 bool Zbackhaul::isConnected()
 {
   bool connected = true;
-#if Wiring_Cellular
+#if BACKHAUL_IS_CELL
   if (!Cellular.ready()) {
     debug("Cellular not ready\n");
     connected = false;
   }
 #endif
 
-#if Wiring_WiFi
+#if BACKHAUL_IS_WIFI
   if (!WiFi.ready()) {
     debug("WiFi not ready\n");
     connected = false;
@@ -145,13 +150,29 @@ bool Zbackhaul::isConnected()
   return connected;
 }
 
-void Zbackhaul::off()
+void Zbackhaul::shutdown()
 {
-  #if Wiring_Cellular
-  Cellular.off();
-  #endif
-  #if Wiring_WiFi
-  WiFi.off();
-  #endif
   
+#if BACKHAUL_IS_CELL
+  Cellular.off();
+#endif
+
+#if BACKHAUL_IS_WIFI
+  WiFi.off();
+#endif
+  
+}
+
+FuelGauge fuel;
+
+float Zbackhaul::batteryLevel()
+{
+  if (zbackhaul.isCellular()) return fuel.getSoC();
+  else if (zbackhaul.isWifi()) {
+    float voltage = analogRead(BATT) * 0.0011224;
+    float batCharge = exp(5.0601*voltage)*0.0000001;
+    if (batCharge>100) batCharge = 100;
+    return batCharge;
+  }
+  else crash("Zbackhaul::batteryLevel() - logic error.");
 }

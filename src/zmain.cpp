@@ -9,6 +9,13 @@
 #include "zbackhaul.h"
 #include "zalerts.h"
 
+/*
+Wake up.
+If we woke from timer that was set due to inactivity, the clock setup will put us back to sleep PIR-awaiting sleep.
+Otherwise we continue.
+Restore or initialize the system state.
+Start the baseboard, backhaul, detector, and alerts.
+ */
 void setup()
 {
   //just waking up from power off
@@ -25,12 +32,25 @@ void setup()
   zalerts.setup();
 }
 
+/*
+Outer loop for 2 minutes.
+Inner loop for 5 seconds, taking a reading each time.
+ */
+const long stayupTime = 120*1000;	//2 minutes
+const long readingInterval = 5*1000;	//5 seconds
+
 void loop()
 {
-  zdetector.read();
-  zalerts.loop();
-  crash("test");
-    
+  unsigned long now = millis();
+  
+  unsigned long elapsedTime = now - zstate.p.wakeupTime;
+  if (elapsedTime > stayupTime) zstate.sleep();
+
+  elapsedTime = now - zdetector.lastReadingTime();
+  if (elapsedTime > readingInterval) {
+    zdetector.read();
+    zalerts.loop();
+  }
 }
 
 /*

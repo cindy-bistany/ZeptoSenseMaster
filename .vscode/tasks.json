@@ -9,6 +9,18 @@
 			],
 			"group": "clean",
 			"label": "Particle: Clean application & DeviceOS (local)"
+		},
+		{
+			"type": "particle",
+			"name": "Compile application & DeviceOS (local)",
+			"problemMatcher": [
+				"$particle-gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"label": "Particle: Compile application & DeviceOS (local)"
 		}
 	]
 }

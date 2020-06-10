@@ -7,6 +7,7 @@ class Zdetector {
   void clear();
   void read();
 
+  unsigned long lastReadingTime();
   bool tampered();
   void tamperReset();
   
@@ -22,7 +23,7 @@ class Zdetector {
   int batteryLevel();
 
  private:
-
+  unsigned long lastReadTime;
 };
 
 extern Zdetector zdetector;

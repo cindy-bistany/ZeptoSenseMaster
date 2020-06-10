@@ -9,14 +9,17 @@
 class Zbackhaul {
  public:
   void setup();
-  void connect();
-  void connectWithoutWaiting();
   bool isConnected();
+  bool isWifi();
+  bool isCellular();
   int signalStrength();
+  float batteryLevel();
   
-  void off();
+  void shutdown();
 
  private:
+  void connect();
+  void connectWithoutWaiting();
   
 };
 

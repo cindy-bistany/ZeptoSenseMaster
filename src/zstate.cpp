@@ -31,26 +31,10 @@ void Zstate::load()
   // EEPROM.get(0, state);
   debug("Loading State\n");
   fram.get(0,*this);
-  if (p.build_random_number != BUILD_RANDOM_NUMBER) {  //Check for first time the firmware runs
+  if (p.build_random_number != BUILD_RANDOM_NUMBER)  //Check for first time the firmware runs
     factory_reset();
-    save();
-  }
-  else {
-    debug("Not first run.\n");
-    // firstRun =false;
-  }
+  else debug("Not first run.\n");
 
-}
-
-void Zstate::deepSleep()
-{
-  save();
-  debug("Going to sleep\n");
-  int sleepTime = 0;
-#if Wiring_Cellular
-  sleepTime = 900;
-#endif
-  zclock.deepSleep(sleepTime);
 }
 
 const String factory_expression = "pm1>300||pm2>300||pm4>300||pm10>300&&conc>100||temp>150";
@@ -60,17 +44,15 @@ const String factory_tamperEmail= "bistany@comcast.net";
 
 void Zstate::factory_reset()
 {
+  p.build_number = BUILD_NUMBER;
   p.build_random_number = BUILD_RANDOM_NUMBER;
   
   p.deviceTimeZone = 0;		//America/New_York
-  p.gmtOffsetSeconds = -4*3600;	//4 hours
+  p.gmtOffsetSeconds = -4*3600;	//4 hours west
   p.gmtOffsetValid = false;
   p.timeIsSynchronized = false;
   p.accumulatedOnTime = 0;
   
-  p.portBlynk = 8080;
-  p.portBuzzer = D7;
-
   p.wakeupTime = p.accumulatedOnTime = p.backhaulOnTime = 0;
   
   p.readingCount = 0;
@@ -84,8 +66,6 @@ void Zstate::factory_reset()
   strcpy(p.tamperEmail, factory_tamperEmail);
   
   p.batteryThreshold = 20.0;
-  p.lastAlert = false;
-  p.batLastAlert = false;
   p.activityThreshold = 100; // Which is set to 1 in Blynk
 
   p.enableBuzzerTamper = true;  // Buzzer Tamper
@@ -101,6 +81,13 @@ void Zstate::factory_reset()
   save();
 }
 
+
+void Zstate::sleep()
+{
+  if (zbackhaul.isCellular()) zclock.sleep(900);
+  else if (zbackhaul.isWifi()) zclock.sleep(0);
+  else crash("Zstate::sleep() - logic error.");
+}
 
 String Zstate::str() {
   //print out the state struct on the debug serial port
