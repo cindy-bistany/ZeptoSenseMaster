@@ -25,7 +25,7 @@
 #define MH02 0
 #define CH01 0
 #define CH02 0
-#define DEMO1 0
+#define DEMO1 1
 #define DEMO2 0 
 
 #ifdef NM01

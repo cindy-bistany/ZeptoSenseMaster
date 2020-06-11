@@ -12,5 +12,5 @@
         "vector": "cpp",
         "initializer_list": "cpp"
     },
-    "particle.targetDevice": "Zep2W"
+    "particle.targetDevice": "ZepDemo_001"
 }

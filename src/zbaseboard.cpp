@@ -39,8 +39,7 @@ void Zbaseboard::setup_expander()
   if (!expandererror == 0) {
     debug("Unable to read Expander - resetting in 9 seconds\n");
     Particle.publish("Error","Unable to read Expander - resetting in 9 seconds",PRIVATE);
-    blinkpanic();
-    System.reset();
+    panic("Zbaseboard::setup_expander() - Unable to read expander");
   }
 }
 ////////////////
@@ -175,7 +174,6 @@ void Zbaseboard::setup_i2c()
     }
   else {
     debug("I2C OK\n");
-    beep("111011101110");
   }
   delay(200);
   if (!i2cOK) System.reset();
@@ -188,8 +186,7 @@ void Zbaseboard::setup_i2c()
 #define BUZZER D7
 void Zbaseboard::setup()
 {
-  beep("---");
-  
+ 
   Wire.setSpeed(20000);
   // Debug console
   pinMode(D8, INPUT_PULLDOWN);
@@ -249,7 +246,7 @@ void Zbaseboard::power5(bool onoff)
 bool Zbaseboard::power3IsOn() {  return v3IsOn;  }
 bool Zbaseboard::power5IsOn() {  return v5IsOn;  }
 float Zbaseboard::batteryLevel()	{ zbackhaul.batteryLevel(); }
-void Zbaseboard::buzzer(bool onoff)	{ digitalWrite(BUZZER, onoff);  }
+void Zbaseboard::buzzer(bool onoff)	{ return; digitalWrite(BUZZER, onoff);  }
 
 
 //Beep using Morse dots and dashes
@@ -289,5 +286,65 @@ void Zbaseboard::beep(String s) {
   buzzer(false); //belt & suspenders
 }
 
-
-
+void Zbaseboard::morse(String s) {
+  #ifndef ZDEBUG
+  //  return;
+  #endif
+  
+  String pat;
+  for (int i=0; i < s.length(); i++) {
+    char c = s[i];
+    if ((c >='a') && (c<='z')) c = c -'a' + 'A';
+    switch (c) {
+    case 'A': pat = ".-";	break;
+    case 'B': pat = "-...";	break;
+    case 'C': pat = "-.-.";	break;
+    case 'D': pat = "-..";	break;
+    case 'E': pat = ".";	break;
+    case 'F': pat = "..-.";	break;
+    case 'G': pat = "--.";	break;
+    case 'H': pat = "....";	break;
+    case 'I': pat = "..";	break;
+    case 'J': pat = ".---";	break;
+    case 'K': pat = "-.-";	break;
+    case 'L': pat = ".-..";	break;
+    case 'M': pat = "--";	break;
+    case 'N': pat = "-.";	break;
+    case 'O': pat = "---";	break;
+    case 'P': pat = ".--.";	break;
+    case 'Q': pat = "--.-";	break;
+    case 'R': pat = ".-.";	break;
+    case 'S': pat = "...";	break;
+    case 'T': pat = "-";	break;
+    case 'U': pat = "..-";	break;
+    case 'V': pat = "...-";	break;
+    case 'W': pat = ".--";	break;
+    case 'X': pat = "-..-";	break;
+    case 'Y': pat = "-.--";	break;
+    case 'Z': pat = "--..";	break;
+    case '0': pat = "-----";	break;
+    case '1': pat = ".----";	break;
+    case '2': pat = "..---";	break;
+    case '3': pat = "...--";	break;
+    case '4': pat = "....-";	break;
+    case '5': pat = ".....";	break;
+    case '6': pat = "-....";	break;
+    case '7': pat = "--...";	break;
+    case '8': pat = "---..";	break;
+    case '9': pat = "----.";	break;
+    case '.': pat = ".-.-.-";	break;
+    case ',': pat = "--..--";	break;
+    case '?': pat = "..--..";	break;
+    case '-': pat = "-....-";	break;
+    case '\'': pat = ".----.";	break;
+    case ':': pat = "---...";	break;
+    case '"': pat = ".-..-.";	break;
+    case '/': pat = "-..-.";	break;
+    case '@': pat = ".--.-.";	break;
+    case ' ': pat = "  ";	break;
+    default:  pat = "..--..";	break;	//? symbol
+    }
+    zbaseboard.beep(pat);
+    zbaseboard.beep("  ");
+  }
+}

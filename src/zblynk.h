@@ -27,7 +27,6 @@ class Zblynk {
   //This is managed privately, but access from external callback is required, so public here.
   //So don't touch this or look at it from outside the class methods.
   //Use isConnected() instead.
-  bool zblynk_connected;
   //Likewise, these are not useful outside the class, but require access from blynk callback.
   void write_enterCode();
   void write_zeroOffset();
