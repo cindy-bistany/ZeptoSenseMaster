@@ -9,7 +9,7 @@
 
 Zbackhaul zbackhaul;
 
-void Zbackhaul::setup() { connect(false); }
+void Zbackhaul::setup() { connect(true); }
 
 int Zbackhaul::signalStrength()
 {
@@ -30,7 +30,6 @@ bool Zbackhaul::isCellular() { return BACKHAUL_IS_CELL; }
 // Adding explicit connect routine that has to work before the rest of the code runs
 void Zbackhaul::connect(bool blocking)
 {
-  //###### CELLULAR ######
 #if BACKHAUL_IS_CELL
   if (!Cellular.ready()) {
     debug("Attempting to connect cellular...\n");
@@ -44,37 +43,33 @@ void Zbackhaul::connect(bool blocking)
   debug("Cellular is ready\n");
 #endif
 
-  //##### WIFI  #####
 #if BACKHAUL_IS_WIFI
   if (!WiFi.ready()) {
-    debug("Attempting to connect WiFi...\n");
     WiFi.on();
     WiFi.connect();
     if (blocking) {
       waitFor(WiFi.ready,180000);
-      if (!WiFi.ready()) crash("WiFi not ready\n");
+      if (!WiFi.ready()) crash(HORN_CRASH_NONET);
     }
   }
-  debug("WiFi ready\n");
+  if (WiFi.ready()) zbaseboard.morse("ok wifi");
 #endif  
-
-  if (!Particle.connected()) {
-    debug("Attempting to connect to Particle...\n");
-    Particle.connect();
-    if (blocking) {
-      waitFor(Particle.connected, 60000);
-      if (!Particle.connected()) panic("Particle not connected\n");
-    }
-  }
-  debug("Particle connected\n");
 
   if (!zblynk.isConnected()) {
     debug("Attempting to connect to Blynk...\n");
-    zbaseboard.morse("SSSSSSSSSS");
     zblynk.setup();
-    zbaseboard.morse("TT");
-    
   }
+  if (zblynk.isConnected()) zbaseboard.morse("ok blyn");
+
+  if (!Particle.connected()) {
+    Particle.connect();
+    if (blocking) {
+      waitFor(Particle.connected, 60000);
+      if (!Particle.connected()) crash(HORN_CRASH_NOPARTICLE);
+    }
+  }
+  if (Particle.connected()) zbaseboard.morse("ok part");
+  debug("Particle connected\n");
 
 }
 

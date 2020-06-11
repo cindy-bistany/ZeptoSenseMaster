@@ -38,8 +38,8 @@ void Zbaseboard::setup_expander()
   // Blink LED and reset if there is an error
   if (!expandererror == 0) {
     debug("Unable to read Expander - resetting in 9 seconds\n");
-    Particle.publish("Error","Unable to read Expander - resetting in 9 seconds",PRIVATE);
-    panic("Zbaseboard::setup_expander() - Unable to read expander");
+    Particle.publish("Error","Unable to read Expander - resetting now",PRIVATE);
+    crash(HORN_CRASH_EXPANDER);
   }
 }
 ////////////////
@@ -176,7 +176,7 @@ void Zbaseboard::setup_i2c()
     debug("I2C OK\n");
   }
   delay(200);
-  if (!i2cOK) System.reset();
+  if (!i2cOK) crash(HORN_CRASH_NOI2C);
 }
 
 
@@ -225,7 +225,6 @@ void Zbaseboard::shutdown()
   blynk_status_message(statusMessage);
   */
   
-  delay(3000);
   power3(false);
   power5(false);
   if (!Wire.isEnabled()) Wire.end();  // Release I2C bus for expander
@@ -247,7 +246,6 @@ bool Zbaseboard::power3IsOn() {  return v3IsOn;  }
 bool Zbaseboard::power5IsOn() {  return v5IsOn;  }
 float Zbaseboard::batteryLevel()	{ zbackhaul.batteryLevel(); }
 void Zbaseboard::buzzer(bool onoff)	{ return; digitalWrite(BUZZER, onoff);  }
-
 
 //Beep using Morse dots and dashes
 //Make a loop to go through the bit pattern parameter
@@ -346,5 +344,20 @@ void Zbaseboard::morse(String s) {
     }
     zbaseboard.beep(pat);
     zbaseboard.beep("  ");
+  }
+}
+
+void Zbaseboard::horn(int code)
+{
+  String pat = "";
+  while (code > 0) {
+    int unit = code % 10;
+    code /= 10;
+    for (int i=0; i<unit; i++) pat = String(".") + pat;
+    pat = String(" ") + pat;
+  }
+  for (int i=0; i<3; i++) {
+    beep(pat);
+    beep("   ");
   }
 }

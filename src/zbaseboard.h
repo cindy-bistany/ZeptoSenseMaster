@@ -20,6 +20,7 @@ class Zbaseboard {
   void buzzer(bool onoff);
   void beep(String dotdash);
   void morse(String s);
+  void horn(int code);
 
  private:
   void setup_expander();

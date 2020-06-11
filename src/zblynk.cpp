@@ -12,6 +12,8 @@
 #define BLYNK_H
 #endif
 
+#define ZBLYNKPORT 8080
+
 //
 #include "zblynk.h"
 #include "zdetector.h"
@@ -27,15 +29,27 @@ BlynkTimer accelTimer; // Create an accelerometer Timer object
 
 Zblynk zblynk;
 
+void blynk_timer_callback() { zblynk.updateAll(); }
+
 void Zblynk::setup()
 {
   Blynk.config(auth, "zeptosense2.blynk.cc", ZBLYNKPORT);
-  zbaseboard.morse("YYYYY");
+  sensorTimer.setInterval((long) zstate.p.secondsBetweenReadings * 1000, blynk_timer_callback);
+  sensorTimer.run();
+  accelTimer.setInterval(111, blynk_timer_callback);
+  accelTimer.run();
+
+  zbaseboard.horn(32);
   Blynk.run();
-  zbaseboard.morse("AA");
+  zbaseboard.horn(31);
+
+  if (Blynk.connect()) zbaseboard.horn(41);
+  else zbaseboard.horn(42);
+  
+  zbaseboard.horn(33);
   Blynk.connect();
-  zbaseboard.morse("Z3");
-  zbaseboard.morse("ZOUT");
+  zbaseboard.horn(35);
+  Blynk.run();
 }
 
 bool Zblynk::isConnected() { return Blynk.connected();  }
@@ -82,7 +96,7 @@ void Zblynk::write_activityThreshold()
   Blynk.virtualWrite(V31, outp);
 }
 
-void Zblynk::update_all_state()
+void Zblynk::updateState()
 {
   write_numberOfReadings();
   write_secondsBetweenReadings();
@@ -114,7 +128,7 @@ void Zblynk::write_tempF()		{  String str = String::format("%0.1f", zdetector.te
 void Zblynk::write_batteryLevel()	{  String str = String::format("%0.1f", zdetector.batteryLevel());	Blynk.virtualWrite(V7, str); }
 void Zblynk::write_signalStrength()	{  String str = String::format("%0.1f", zbackhaul.signalStrength());	Blynk.virtualWrite(V8, str); }
 
-void Zblynk::update_all_readings()
+void Zblynk::updateReadings()
 {
   write_pm1();
   write_pm25();
@@ -137,14 +151,14 @@ void Zblynk::update()
   //Blynk.virtualWrite(V15, zstate.p.zeroOff);
 }
 
-void Zblynk::update_all() {
-  update_all_state();
-  update_all_readings();
+void Zblynk::updateAll() {
+  updateState();
+  updateReadings();
 }
 
 // Update app connection state
 BLYNK_APP_CONNECTED() {
-  zblynk.update_all();
+  zblynk.updateAll();
   debug("Connected\n");
 }
 
@@ -175,7 +189,7 @@ BLYNK_WRITE(V22) //Reset Expression
   if (_resetKey.equals("resetme")) {
     zblynk.write_enterCode();
     zstate.factory_reset();
-    zblynk.update_all();
+    zblynk.updateAll();
     zblynk.debug_message("Hard Resetting");
     delay(500);
     System.reset();
@@ -187,7 +201,7 @@ BLYNK_CONNECTED() {
   // Request Blynk server to re-send latest values for all pins
   debug("Blynk is now connected - syncing all pins.\n");
   Blynk.syncAll();
-  zblynk.update_all();
+  zblynk.updateAll();
   // You can also update individual virtual pins like this:
   //Blynk.syncVirtual(V0, V2);
 }

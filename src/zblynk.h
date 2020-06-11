@@ -5,15 +5,13 @@
 
 #include "zstate.h"
 
-#define ZBLYNKPORT 8080
-
 class Zblynk {
  public:
   void setup();
   void update();
-  void update_all();
-  void update_all_state();
-  void update_all_readings();
+  void updateAll();
+  void updateState();
+  void updateReadings();
   
   bool isConnected();
   void logEvent(char *s);

@@ -22,7 +22,7 @@ void Zpmcounter::setup_sps30()
   while (true) {
     bool sps30Ok = !sps30pmcounter.begin();
     if (sps30Ok) break;
-    if  ((millis()-sps30start) > 8000) crash("Zpmcounter::setup_sps30() - sps30.begin() failed.\n");
+    if  ((millis()-sps30start) > 8000) crash(HORN_CRASH_NOPMCOUNTER);
     delay(100);
   }
   //must be ok, else we would have crashed
@@ -31,7 +31,7 @@ void Zpmcounter::setup_sps30()
   uint32_t waitForSPS30 = millis();
   while (true) {
     if (sps30pmcounter.dataAvailable()) break;
-    if ((millis() - waitForSPS30 > 8100)) crash("Zpmcounter::setupsps30) - sps30.dataAvailable() timed out.\n");
+    if ((millis() - waitForSPS30 > 8100)) crash(HORN_CRASH_NOPMDATA);
     delay(100);
     //check_accel(); WWWWWWW for now skip this during setup, but put back later
   }

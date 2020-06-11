@@ -27,13 +27,13 @@ void setup()
   zstate.setup();
   zstate.p.wakeupTime = wakeupTime;
   zbaseboard.setup();
-  zbaseboard.morse("OK");
+  zbaseboard.horn(1);
   zbackhaul.setup();
-  zbaseboard.morse("BH OK");
+  zbaseboard.horn(12);
   zdetector.setup();
-  zbaseboard.beep("ZD OK");
+  zbaseboard.horn(13);
   zalerts.setup();
-  zbaseboard.beep("ZA OK");
+  zbaseboard.horn(14);
 }
 
 /*
