@@ -3,6 +3,11 @@
 #include "application.h"
 
 #ifndef BLYNK_H
+#define BLYNKGREEN 0
+#define BLYNKRED 1
+#define BLYNK_PRINT Serial1 // Defines the object that is used for printing
+#define BLYNK_DEBUG        // Optional, this enables more detailed prints
+#define BLYNK_HEARTBEAT      60
 #include <blynk.h>
 #define BLYNK_H
 #endif
@@ -15,8 +20,10 @@
 #include "ziaq.h"
 #include "zclock.h"
 
-#define BLYNKGREEN 0
-#define BLYNKRED 1
+String StateString = "RDY";
+
+BlynkTimer sensorTimer; // Create a Timer object called "sensorTimer"!
+BlynkTimer accelTimer; // Create an accelerometer Timer object
 
 Zblynk zblynk;
 

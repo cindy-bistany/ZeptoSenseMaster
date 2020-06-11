@@ -63,15 +63,5 @@ int interruptPin = A0;                 // Setup pin A0 for Boron
 
 char *pm[5] = {"PM0.5", "PM1.0", "PM2.5", "PM4.0", "PM10"};
 
-#define BLYNK_PRINT Serial1 // Defines the object that is used for printing
-#define BLYNK_DEBUG        // Optional, this enables more detailed prints
-#define BLYNK_HEARTBEAT      60
-
-
-
-String StateString = "RDY";
-
-BlynkTimer sensorTimer; // Create a Timer object called "sensorTimer"!
-BlynkTimer accelTimer; // Create an accelerometer Timer object
 
 */

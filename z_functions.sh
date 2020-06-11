@@ -63,13 +63,13 @@ function z_make_clean() {
 #
 #commit all changes in the project directory to the cloud repo
 #
-function z_backup() {
+function z_push() {
     if [ "${ZDIR}" == "" ]; then
 	echo ZDIR is not set
 	return
     fi
 
-    (cd $ZDIR
+    (cd ${ZDIR}
      local commitMsg="Backup `date`"
      z_make_clean
      git add --verbose .
@@ -78,6 +78,19 @@ function z_backup() {
      git remote remove origin
      git remote --verbose add origin "${GITREPO}"
      git push --verbose origin master
+    )
+}
+
+function z_pull() {
+    if [ "${ZDIR}" == "" ]; then
+	echo ZDIR is not set
+	return
+    fi
+
+    (cd ${ZDIR}
+     git remote remove origin
+     git remote --verbose add origin "${GITREPO}"
+     git pull --verbose origin master
     )
 }
 
