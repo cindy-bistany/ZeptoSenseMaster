@@ -40,8 +40,8 @@ void setup()
 Outer loop for 2 minutes.
 Inner loop for 5 seconds, taking a reading each time.
  */
-const long stayupTime = 120*1000;	//2 minutes
-const long readingInterval = 5*1000;	//5 seconds
+const long readingInterval = zstate.p.secondsBetweenReadings*1000;
+const long stayupTime = zstate.p.numberOfReadings * readingInterval;
 
 void loop()
 {

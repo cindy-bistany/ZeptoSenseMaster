@@ -70,7 +70,10 @@ void Zbackhaul::connect(bool blocking)
 
   if (!zblynk.isConnected()) {
     debug("Attempting to connect to Blynk...\n");
+    zbaseboard.morse("SSSSSSSSSS");
     zblynk.setup();
+    zbaseboard.morse("TT");
+    
   }
 
 }

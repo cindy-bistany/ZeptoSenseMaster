@@ -246,7 +246,7 @@ void Zbaseboard::power5(bool onoff)
 bool Zbaseboard::power3IsOn() {  return v3IsOn;  }
 bool Zbaseboard::power5IsOn() {  return v5IsOn;  }
 float Zbaseboard::batteryLevel()	{ zbackhaul.batteryLevel(); }
-void Zbaseboard::buzzer(bool onoff)	{ digitalWrite(BUZZER, onoff);  }
+void Zbaseboard::buzzer(bool onoff)	{ return; digitalWrite(BUZZER, onoff);  }
 
 
 //Beep using Morse dots and dashes
@@ -287,9 +287,8 @@ void Zbaseboard::beep(String s) {
 }
 
 void Zbaseboard::morse(String s) {
-  return;
   #ifndef ZDEBUG
-  return;
+  //  return;
   #endif
   
   String pat;

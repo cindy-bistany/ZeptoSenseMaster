@@ -23,7 +23,9 @@ Zblynk zblynk;
 void Zblynk::setup()
 {
   Blynk.config(auth, "zeptosense2.blynk.cc", ZBLYNKPORT);
+  zbaseboard.morse("YYYYY");
   Blynk.run();
+  zbaseboard.morse("AA");
   Blynk.connect();
   zbaseboard.morse("Z3");
   zbaseboard.morse("ZOUT");
